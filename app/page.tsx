@@ -1,40 +1,26 @@
 // app/page.tsx
 "use client";
 
-import { useState } from "react"; // Added for pagination state
 import Link from "next/link";
 import Image from "next/image";
-// Added Chevron icons for pagination controls
-import {
-  Sparkles,
-  Play,
-  Heart,
-  Bookmark,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { isaiahChapters } from "@/app/lib/data";
+import { Sparkles, Play, Heart, Bookmark, CheckCircle2 } from "lucide-react";
+import { isaiahChapters, ChapterData } from "@/app/lib/data";
 import { useProgress } from "@/app/lib/hooks";
 
 export default function Home() {
   const chapters = Object.entries(isaiahChapters);
   const { completedChapters, isLoaded } = useProgress();
 
-  // --- Pagination Logic ---
-  const [currentPage, setCurrentPage] = useState(1);
-  const CHAPTERS_PER_PAGE = 4;
+  // --- Carousel Grouping Logic ---
+  // Split the chapters into chunks of 10
+  const CHAPTERS_PER_ROW = 10;
+  const chunkedChapters: [string, ChapterData][][] = [];
 
-  const totalPages = Math.ceil(chapters.length / CHAPTERS_PER_PAGE);
-  const startIndex = (currentPage - 1) * CHAPTERS_PER_PAGE;
-  const paginatedChapters = chapters.slice(
-    startIndex,
-    startIndex + CHAPTERS_PER_PAGE
-  );
+  for (let i = 0; i < chapters.length; i += CHAPTERS_PER_ROW) {
+    chunkedChapters.push(chapters.slice(i, i + CHAPTERS_PER_ROW));
+  }
   // -------------------------
 
-  // Find the first chapter ID that isn't completed to determine the "next" chapter
-  // Note: This remains calculated from the full list so the Hero is always accurate
   const nextChapterId =
     chapters.find(([id]) => !completedChapters.includes(id))?.[0] || "1";
 
@@ -64,7 +50,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="px-4 mb-8">
+      <section className="px-4 mb-12">
         <div className="bg-stone-900 rounded-4xl p-8 text-white relative overflow-hidden min-h-[350px] flex flex-col justify-end shadow-2xl">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
 
@@ -118,91 +104,64 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Chapters Feed */}
-      <section className="px-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400">
-            Chapters
-          </h3>
-          {/* Page indicator for mobile/desktop layout help */}
-          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter">
-            Page {currentPage} of {totalPages}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Map through paginatedChapters instead of all chapters */}
-          {paginatedChapters.map(([id, chapter]) => {
-            const isDone = completedChapters.includes(id);
-            const thumbnail = chapter.visuals[0]?.imageSrc;
-
-            return (
-              <Link key={id} href={`/isaiah/${id}`} className="group">
-                <div className="aspect-3/4 bg-stone-800 rounded-3xl border-2 border-stone-100 relative overflow-hidden transition-all duration-300 hover:border-amber-400 hover:shadow-lg">
-                  {thumbnail && (
-                    <div className="absolute inset-0 z-0">
-                      <Image
-                        src={thumbnail}
-                        alt={`Chapter ${chapter.chapter}`}
-                        fill
-                        className="object-cover opacity-70 group-hover:opacity-60 transition-opacity"
-                      />
-                    </div>
-                  )}
-
-                  <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
-                    <div className="flex justify-end">
-                      {isDone && (
-                        <CheckCircle2
-                          size={28}
-                          strokeWidth={3}
-                          className="text-green-600 drop-shadow-md"
-                        />
-                      )}
-                    </div>
-                    <h4 className="font-serif text-xl font-bold text-white leading-tight group-hover:text-amber-400 transition-colors drop-shadow-lg">
-                      Chapter {chapter.chapter}
-                    </h4>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-6 mt-10">
-            <button
-              onClick={() => {
-                setCurrentPage((p) => Math.max(1, p - 1));
-                window.scrollTo({ top: 0, behavior: "smooth" }); // Optional scroll to top
-              }}
-              disabled={currentPage === 1}
-              className="p-3 rounded-full bg-white border border-stone-200 text-stone-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-sm"
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            <div className="flex flex-col items-center">
-              <span className="text-xs font-black text-stone-900">
-                {currentPage}
-              </span>
-              <div className="w-4 h-0.5 bg-amber-500 rounded-full" />
+      {/* Chapters Feed as Carousels */}
+      <section className="space-y-12 ml-4">
+        {chunkedChapters.map((chunk, index) => (
+          <div key={index} className="flex flex-col gap-4">
+            <div className="px-6 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400">
+                Chapters {index * 10 + 1} —{" "}
+                {Math.min((index + 1) * 10, chapters.length)}
+              </h3>
             </div>
 
-            <button
-              onClick={() => {
-                setCurrentPage((p) => Math.min(totalPages, p + 1));
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              disabled={currentPage === totalPages}
-              className="p-3 rounded-full bg-white border border-stone-200 text-stone-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-sm"
-            >
-              <ChevronRight size={20} />
-            </button>
+            {/* Horizontal Scroll Container (Carousel) */}
+            <div className="flex overflow-x-auto gap-4 px-6 pb-4 snap-x snap-mandatory no-scrollbar">
+              {chunk.map(([id, chapter]) => {
+                const isDone = completedChapters.includes(id);
+                const thumbnail = chapter.visuals[0]?.imageSrc;
+
+                return (
+                  <Link
+                    key={id}
+                    href={`/isaiah/${id}`}
+                    className="group flex-none w-[160px] md:w-[200px] snap-start"
+                  >
+                    <div className="aspect-3/4 bg-stone-800 rounded-3xl border-2 border-stone-100 relative overflow-hidden transition-all duration-300 hover:border-amber-400 hover:shadow-lg">
+                      {thumbnail && (
+                        <div className="absolute inset-0 z-0">
+                          <Image
+                            src={thumbnail}
+                            alt={`Chapter ${chapter.chapter}`}
+                            fill
+                            className="object-cover opacity-70 group-hover:opacity-60 transition-opacity"
+                          />
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
+                        <div className="flex justify-end">
+                          {isDone && (
+                            <CheckCircle2
+                              size={24}
+                              strokeWidth={3}
+                              className="text-green-500 drop-shadow-md"
+                            />
+                          )}
+                        </div>
+                        <h4 className="font-serif text-lg font-bold text-white leading-tight group-hover:text-amber-400 transition-colors drop-shadow-lg">
+                          Chapter {chapter.chapter}
+                        </h4>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+              {/* Spacer for the end of the scroll */}
+              <div className="flex-none w-2" />
+            </div>
           </div>
-        )}
+        ))}
       </section>
     </main>
   );
