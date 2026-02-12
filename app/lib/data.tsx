@@ -31,7 +31,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Isang amang may mapagrebeldeng mga anak ",
         description: "Verses 1-9",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/Isaiah1-1.png",
         alt: "",
       },
       {
@@ -222,7 +222,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Gagawing mas mataas ang bundok ni Jehova ",
         description: "Verses 1-5",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -366,7 +366,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Inililigaw ng mga pinuno ng Juda ang bayan",
         description: "Verses 1-15",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -518,7 +518,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Pitong babae sa isang lalaki ",
         description: "Verses 1",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -570,7 +570,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Awit tungkol sa ubasan ni Jehova",
         description: "Verses 1-7",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -749,7 +749,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Nakita sa pangitain si Jehova na nasa kaniyang templo",
         description: "Verses 1-4",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -860,7 +860,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Mensahe kay Haring Ahaz",
         description: "Verses 1-9",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -974,7 +974,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Ang nalalapit na pagsalakay ng Asirya",
         description: "Verses 1-8",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -1090,7 +1090,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Matinding liwanag sa lupain ng Galilea",
         description: "Verses 1-7",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
@@ -1202,7 +1202,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Ang kamay ng Diyos laban sa Israel",
         description: "Verses 1-4",
-        imageSrc: "/pictures/Isaiah1-1.jpeg",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {

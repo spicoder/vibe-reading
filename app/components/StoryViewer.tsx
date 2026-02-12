@@ -324,7 +324,7 @@ function StoryViewerContent({
                   src={currentSlide.data.imageSrc}
                   alt={currentSlide.data.alt}
                   fill
-                  className="object-cover transition-transform duration-700"
+                  className="object-contain transition-transform duration-700"
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60"></div>
