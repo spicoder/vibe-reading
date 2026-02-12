@@ -31,7 +31,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         startVerse: 1,
         title: "Isang amang may mapagrebeldeng mga anak ",
         description: "Verses 1-9",
-        imageSrc: "/pictures/Isaiah1-1.png",
+        imageSrc: "/pictures/placeholder.png",
         alt: "",
       },
       {
