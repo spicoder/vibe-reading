@@ -1,13 +1,11 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { ArrowLeft, Heart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useFavorites } from "@/app/lib/hooks";
 import { isaiahChapters } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
 
-// Helper function to recreate the order of items and find the exact index
-// so the user can be routed to the correct slide.
 const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
   const items: { id: string }[] = [];
   const sortedVisuals = [...chapter.visuals].sort(
@@ -64,21 +62,21 @@ const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
 export default function FavoritesPage() {
   const { favorites, toggleFavorite, isLoaded } = useFavorites();
 
+  // NEW: State for our custom delete modal
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
   const getVerseContent = (id: string) => {
     let chapterNum = "1";
     let type = "";
     let verseNum = 0;
 
-    // Parse the new ID format
     const newFormatMatch = id.match(/chapter-(\d+)-(verse|visual)-(\d+)/);
 
     if (newFormatMatch) {
       chapterNum = newFormatMatch[1];
       type = newFormatMatch[2];
       verseNum = parseInt(newFormatMatch[3], 10);
-    }
-    // Fallback for old saved IDs
-    else if (id.startsWith("verse-")) {
+    } else if (id.startsWith("verse-")) {
       type = "verse";
       const parts = id.replace("verse-", "").split("-");
       verseNum = parseInt(parts[0], 10);
@@ -92,14 +90,12 @@ export default function FavoritesPage() {
     const chapterData = isaiahChapters[chapterNum];
     if (!chapterData) return null;
 
-    // Calculate the correct slide index for navigation
     const slideIndex = getSlideIndex(chapterData, id);
     const linkHref =
       slideIndex >= 0
         ? `/isaiah/${chapterNum}?slide=${slideIndex}`
         : `/isaiah/${chapterNum}`;
 
-    // Return the correct content based on type
     if (type === "verse") {
       const verse = chapterData.verses.find((v) => v.verse === verseNum);
       return verse
@@ -135,7 +131,7 @@ export default function FavoritesPage() {
     );
 
   return (
-    <main className="min-h-screen bg-[#FDFBF7] p-6">
+    <main className="min-h-screen bg-[#FDFBF7] p-6 relative">
       <header className="flex items-center justify-between mb-8 sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-sm z-10 py-4">
         <div className="flex items-center gap-4">
           <Link
@@ -171,7 +167,6 @@ export default function FavoritesPage() {
             return (
               <Link href={content.linkHref} key={id} className="block group">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative overflow-hidden transition-all hover:border-amber-500 hover:shadow-md cursor-pointer">
-                  {/* Header Row */}
                   <div className="flex justify-between items-center mb-4 border-b border-stone-100 pb-3">
                     <div className="flex items-center gap-2">
                       <div
@@ -183,9 +178,9 @@ export default function FavoritesPage() {
                     </div>
                     <button
                       onClick={(e) => {
-                        e.preventDefault(); // Prevents navigating to the verse when tapping Trash
-                        e.stopPropagation(); // Stops the event from bubbling up to the Link
-                        toggleFavorite(id);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setItemToDelete(id); // Set the specific item to trigger the modal
                       }}
                       className="text-stone-300 hover:text-red-500 transition-colors p-2 -mr-2"
                     >
@@ -193,7 +188,6 @@ export default function FavoritesPage() {
                     </button>
                   </div>
 
-                  {/* Content Body */}
                   <div className="text-stone-700 font-serif leading-relaxed text-lg">
                     {content.text.replace(/\*\*/g, "")}
                   </div>
@@ -201,6 +195,37 @@ export default function FavoritesPage() {
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold font-serif mb-2 text-stone-900">
+              Remove Favorite?
+            </h3>
+            <p className="text-stone-500 mb-8 leading-relaxed">
+              Are you sure you want to remove this from your favorites?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setItemToDelete(null)}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  toggleFavorite(itemToDelete);
+                  setItemToDelete(null);
+                }}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

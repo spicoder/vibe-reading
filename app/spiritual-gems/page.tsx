@@ -16,7 +16,7 @@ import { useGems } from "@/app/lib/hooks";
 function GemsEditor({ initialRef }: { initialRef: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo"); // Upgrade: Capture return path
+  const returnTo = searchParams.get("returnTo");
 
   const { getGem, saveGem, isLoaded } = useGems();
   const [note, setNote] = useState("");
@@ -41,7 +41,6 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
       <header className="flex items-center gap-4 p-6 sticky top-0 z-10 bg-[#FDFBF7]/90 backdrop-blur-md">
         <button
           onClick={() => {
-            // Upgrade: If a return slide is specified, go there; otherwise go to the gems list
             if (returnTo) {
               router.push(decodeURIComponent(returnTo));
             } else {
@@ -109,10 +108,14 @@ function GemsList() {
   const { allGems, deleteGem, isLoaded } = useGems();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // NEW: State for custom delete modal
+  const [gemToDelete, setGemToDelete] = useState<string | null>(null);
+
   if (!isLoaded)
     return (
       <div className="p-10 text-center text-stone-400">Loading gems...</div>
     );
+
   const gemsArray = Object.entries(allGems).map(([ref, content]) => ({
     ref,
     content,
@@ -120,11 +123,11 @@ function GemsList() {
   const filteredGems = gemsArray.filter(
     (g) =>
       g.ref.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      g.content.toLowerCase().includes(searchTerm.toLowerCase())
+      g.content.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FDFBF7]">
+    <div className="flex flex-col min-h-screen bg-[#FDFBF7] relative">
       <header className="p-6 sticky top-0 z-10 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-stone-100">
         <div className="flex items-center gap-4 mb-6">
           <Link
@@ -199,8 +202,9 @@ function GemsList() {
                   </Link>
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      if (confirm("Delete this note?")) deleteGem(gem.ref);
+                      setGemToDelete(gem.ref); // Trigger the custom modal
                     }}
                     className="p-2 -mt-2 -mr-2 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                   >
@@ -227,6 +231,38 @@ function GemsList() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {gemToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold font-serif mb-2 text-stone-900">
+              Delete Note?
+            </h3>
+            <p className="text-stone-500 mb-8 leading-relaxed">
+              Are you sure you want to delete this spiritual gem? This action
+              cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setGemToDelete(null)}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteGem(gemToDelete);
+                  setGemToDelete(null);
+                }}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

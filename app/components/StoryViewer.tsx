@@ -338,7 +338,7 @@ function StoryViewerContent({
                   `Isaias ${currentChapter}:${verseData.verseDisplay}`,
                 );
                 const returnTo = encodeURIComponent(
-                  `/Isaias/${currentChapter}?slide=${currentIndex}`,
+                  `/isaiah/${currentChapter}?slide=${currentIndex}`,
                 );
                 router.push(`/spiritual-gems?ref=${ref}&returnTo=${returnTo}`);
               }}
