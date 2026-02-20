@@ -1,23 +1,4 @@
-export type Verse = {
-  verse: number;
-  groupId?: string;
-  speaker: string;
-  text: string;
-};
-
-export type VisualScene = {
-  startVerse: number;
-  title: string;
-  description: string;
-  imageSrc: string;
-  alt: string;
-};
-
-export type ChapterData = {
-  chapter: number;
-  visuals: VisualScene[];
-  verses: Verse[];
-};
+import { ChapterData } from "../types";
 
 export const isaiahChapters: Record<string, ChapterData> = {
   "1": {

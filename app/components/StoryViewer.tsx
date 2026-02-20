@@ -4,29 +4,21 @@ import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { X, Map, Heart, MessageCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChapterData, Verse, VisualScene } from "@/app/lib/data";
+import {
+  ChapterData,
+  Verse,
+  StoryItem,
+  StoryViewerProps,
+  SpeakerTheme,
+} from "@/app/types";
+import { speakerThemes } from "../lib/speakerThemes";
 import { useFavorites, useProgress } from "@/app/lib/hooks";
 import Link from "next/link";
 import Image from "next/image";
 
-type StoryItem =
-  | { type: "visual"; data: VisualScene; id: string; segmentIndex: number }
-  | {
-      type: "verse";
-      data: {
-        verses: Verse[];
-        speaker: string;
-        text: string;
-        verseDisplay: string;
-      };
-      id: string;
-      segmentIndex: number;
-    };
-
-interface StoryViewerProps {
-  chapter: ChapterData;
-  nextChapterId: string | null;
-}
+const getSpeakerTheme = (speakerName: string): SpeakerTheme => {
+  return speakerThemes[speakerName] || speakerThemes.default;
+};
 
 const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   const items: StoryItem[] = [];
@@ -211,6 +203,13 @@ function StoryViewerContent({
     }),
   };
 
+  const isVerse = currentSlide.type === "verse";
+  const verseData = currentSlide.type === "verse" ? currentSlide.data : null;
+  const visualData = currentSlide.type === "visual" ? currentSlide.data : null;
+  const currentTheme = verseData
+    ? getSpeakerTheme(verseData.speaker)
+    : getSpeakerTheme("default");
+
   return (
     <div className="fixed inset-0 bg-black text-white font-sans overflow-hidden select-none touch-none">
       {/* 1. SEGMENTED PROGRESS BARS */}
@@ -257,10 +256,12 @@ function StoryViewerContent({
         }`}
       >
         <div className="flex items-center gap-3">
-          {currentSlide.type === "verse" ? (
-            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+          {verseData ? (
+            <div
+              className={`flex items-center gap-2 backdrop-blur-md px-3 py-1.5 rounded-full border ${currentTheme.badge}`}
+            >
               <span className="font-bold text-sm tracking-wide">
-                {currentSlide.data.speaker}
+                {verseData.speaker}
               </span>
             </div>
           ) : (
@@ -286,7 +287,7 @@ function StoryViewerContent({
           isPaused ? "opacity-0" : "opacity-100"
         }`}
       >
-        {currentSlide.type === "verse" && (
+        {verseData && (
           <>
             <button
               onClick={(e) => {
@@ -313,7 +314,7 @@ function StoryViewerContent({
               onClick={(e) => {
                 e.stopPropagation();
                 const ref = encodeURIComponent(
-                  `Isaias ${currentChapter}:${currentSlide.data.verseDisplay}`,
+                  `Isaias ${currentChapter}:${verseData.verseDisplay}`,
                 );
                 const returnTo = encodeURIComponent(
                   `/Isaias/${currentChapter}?slide=${currentIndex}`,
@@ -367,12 +368,12 @@ function StoryViewerContent({
           exit="exit"
           className="absolute inset-0 flex flex-col justify-center items-center"
         >
-          {currentSlide.type === "visual" ? (
+          {visualData ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-center relative">
               <div className="absolute inset-0">
                 <Image
-                  src={currentSlide.data.imageSrc}
-                  alt={currentSlide.data.alt}
+                  src={visualData.imageSrc}
+                  alt={visualData.alt}
                   fill
                   className="object-contain transition-transform duration-700"
                   priority
@@ -382,42 +383,33 @@ function StoryViewerContent({
               <motion.div className="relative z-10 p-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-8 shadow-xl">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
-                    {currentSlide.data.description}
+                    {visualData.description}
                   </span>
                 </div>
                 <h2 className="text-4xl md:text-7xl font-black font-serif text-white mb-6 leading-tight tracking-tighter drop-shadow-2xl">
-                  {currentSlide.data.title}
+                  {visualData.title}
                 </h2>
               </motion.div>
             </div>
-          ) : (
+          ) : verseData ? (
             <div
-              className={`w-full h-full flex flex-col relative justify-center transition-colors duration-700 ${
-                currentSlide.data.speaker === "Jehova"
-                  ? "bg-gradient-to-b from-yellow-500/80 to-black"
-                  : "bg-stone-900"
-              }`}
+              className={`w-full h-full flex flex-col relative justify-center transition-colors duration-700 ${currentTheme.container}`}
             >
               <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[length:16px_16px]"></div>
               <div className="relative z-10 max-w-xl mx-auto w-full px-8">
                 <p
-                  className={`font-serif leading-relaxed mb-6 transition-transform duration-300
-                    ${
-                      currentSlide.data.speaker === "Jehova"
-                        ? "text-2xl md:text-4xl text-amber-50"
-                        : "text-2xl md:text-3xl text-stone-200"
-                    }`}
+                  className={`font-serif leading-relaxed mb-6 transition-transform duration-300 ${currentTheme.text}`}
                 >
-                  {currentSlide.data.text}
+                  {verseData.text}
                 </p>
               </div>
               <div className="absolute bottom-12 left-8 z-20">
                 <p className="font-bold uppercase tracking-widest text-amber-500/80 text-xs">
-                  Isaias {currentChapter}:{currentSlide.data.verseDisplay}
+                  Isaias {currentChapter}:{verseData.verseDisplay}
                 </p>
               </div>
             </div>
-          )}
+          ) : null}
         </motion.div>
       </AnimatePresence>
 
