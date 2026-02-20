@@ -29,6 +29,9 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
 
   let currentGroup: Verse[] = [];
 
+  // Create a Set to track which visuals have already been added
+  const addedVisuals = new Set<number>();
+
   const flushGroup = () => {
     if (currentGroup.length === 0) return;
 
@@ -41,14 +44,20 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
     );
     const visual = sortedVisuals[segmentIndex];
 
-    // Add visual if it exactly matches the start of this verse group
-    if (visual && firstVerse.verse === visual.startVerse) {
+    // Add visual if it exactly matches the start of this verse group AND hasn't been added yet
+    if (
+      visual &&
+      firstVerse.verse === visual.startVerse &&
+      !addedVisuals.has(visual.startVerse)
+    ) {
       items.push({
         type: "visual",
         data: visual,
         id: `visual-${firstVerse.verse}`,
         segmentIndex: Math.max(0, segmentIndex),
       });
+      // Mark this visual as added
+      addedVisuals.add(visual.startVerse);
     }
 
     // Format display string
@@ -61,6 +70,9 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
     const combinedText = currentGroup.map((v) => v.text).join(" ");
     const speaker = firstVerse.speaker; // Take the speaker from the first verse
 
+    // Create a unique ID to prevent React duplicate key errors when a verse is split
+    const uniqueVerseId = `verse-${firstVerse.verse}-${items.length}`;
+
     items.push({
       type: "verse",
       data: {
@@ -69,7 +81,7 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
         text: combinedText,
         verseDisplay,
       },
-      id: `verse-${firstVerse.verse}`,
+      id: uniqueVerseId, // Use the unique ID here
       segmentIndex: Math.max(0, segmentIndex),
     });
 
