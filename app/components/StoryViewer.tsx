@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { X, Map, Heart, MessageCircle } from "lucide-react";
+import { X, Map, Heart, MessageCircle, LayoutGrid } from "lucide-react"; // Added LayoutGrid
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChapterData,
@@ -28,9 +28,10 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   const sortedVerses = [...chapter.verses].sort((a, b) => a.verse - b.verse);
 
   let currentGroup: Verse[] = [];
-
-  // Create a Set to track which visuals have already been added
   const addedVisuals = new Set<number>();
+
+  // Extract the chapter number to use in our unique IDs
+  const chapterNumber = chapter.chapter;
 
   const flushGroup = () => {
     if (currentGroup.length === 0) return;
@@ -53,10 +54,10 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
       items.push({
         type: "visual",
         data: visual,
-        id: `visual-${firstVerse.verse}`,
+        // Include chapter number in the visual ID
+        id: `chapter-${chapterNumber}-visual-${firstVerse.verse}`,
         segmentIndex: Math.max(0, segmentIndex),
       });
-      // Mark this visual as added
       addedVisuals.add(visual.startVerse);
     }
 
@@ -68,10 +69,10 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
 
     // Combine texts
     const combinedText = currentGroup.map((v) => v.text).join(" ");
-    const speaker = firstVerse.speaker; // Take the speaker from the first verse
+    const speaker = firstVerse.speaker;
 
-    // Create a unique ID to prevent React duplicate key errors when a verse is split
-    const uniqueVerseId = `verse-${firstVerse.verse}-${items.length}`;
+    // Include chapter number in the verse ID to make it globally unique across all chapters
+    const uniqueVerseId = `chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
 
     items.push({
       type: "verse",
@@ -81,7 +82,7 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
         text: combinedText,
         verseDisplay,
       },
-      id: uniqueVerseId, // Use the unique ID here
+      id: uniqueVerseId, // Use the globally unique ID here
       segmentIndex: Math.max(0, segmentIndex),
     });
 
@@ -94,18 +95,15 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
       currentGroup.push(verse);
     } else {
       const prevVerse = currentGroup[currentGroup.length - 1];
-      // If the verse has a groupId and it matches the previous verse, add it to the group
       if (verse.groupId && prevVerse.groupId === verse.groupId) {
         currentGroup.push(verse);
       } else {
-        // Otherwise, flush the current group and start a new one
         flushGroup();
         currentGroup.push(verse);
       }
     }
   }
 
-  // Flush any remaining verses
   flushGroup();
 
   return items;
@@ -128,7 +126,8 @@ function StoryViewerContent({
   const [currentIndex, setCurrentIndex] = useState(initialSlide);
   const [direction, setDirection] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [progress, setProgress] = useState(0); // Manual progress state (0-100)
+  const [showGrid, setShowGrid] = useState(false); // New state for grid view
+  const [progress, setProgress] = useState(0);
 
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -148,7 +147,7 @@ function StoryViewerContent({
     if (currentIndex < slides.length - 1) {
       setDirection(1);
       setCurrentIndex((prev) => prev + 1);
-      setProgress(0); // Reset timer for new slide
+      setProgress(0);
     }
   }, [currentIndex, slides.length]);
 
@@ -156,16 +155,17 @@ function StoryViewerContent({
     if (currentIndex > 0) {
       setDirection(-1);
       setCurrentIndex((prev) => prev - 1);
-      setProgress(0); // Reset timer for new slide
+      setProgress(0);
     }
   }, [currentIndex]);
 
-  // --- Timer / Progress Logic (Facebook Style) ---
+  // --- Timer / Progress Logic ---
   useEffect(() => {
-    if (isPaused || isLastSlide) return;
+    // Pause the timer if grid is shown
+    if (isPaused || isLastSlide || showGrid) return;
 
-    const SLIDE_DURATION = 15000; // 15 seconds per slide
-    const INTERVAL_MS = 50; // Update every 50ms
+    const SLIDE_DURATION = 15000;
+    const INTERVAL_MS = 50;
     const INCREMENT = (INTERVAL_MS / SLIDE_DURATION) * 100;
 
     const timer = setInterval(() => {
@@ -179,7 +179,7 @@ function StoryViewerContent({
     }, INTERVAL_MS);
 
     return () => clearInterval(timer);
-  }, [isPaused, handleNext, isLastSlide]);
+  }, [isPaused, handleNext, isLastSlide, showGrid]);
 
   useEffect(() => {
     if (isLastSlide) {
@@ -190,13 +190,14 @@ function StoryViewerContent({
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showGrid) return; // Disable keyboard navigation while grid is open
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === " ") setIsPaused((p) => !p);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext, handlePrev]);
+  }, [handleNext, handlePrev, showGrid]);
 
   const variants: Variants = {
     enter: (direction: number) => ({
@@ -215,7 +216,6 @@ function StoryViewerContent({
     }),
   };
 
-  const isVerse = currentSlide.type === "verse";
   const verseData = currentSlide.type === "verse" ? currentSlide.data : null;
   const visualData = currentSlide.type === "visual" ? currentSlide.data : null;
   const currentTheme = verseData
@@ -225,7 +225,7 @@ function StoryViewerContent({
   return (
     <div className="fixed inset-0 bg-black text-white font-sans overflow-hidden select-none touch-none">
       {/* 1. SEGMENTED PROGRESS BARS */}
-      <div className="absolute top-2 left-2 right-2 z-50 flex flex-col gap-2">
+      <div className="absolute top-2 left-2 right-2 z-40 flex flex-col gap-2">
         <div className="flex gap-1 h-1">
           {segmentSlides.map((_, idx) => (
             <div
@@ -264,7 +264,7 @@ function StoryViewerContent({
       {/* 2. HEADER */}
       <div
         className={`absolute top-10 left-4 right-4 z-40 flex justify-between items-start transition-opacity duration-300 ${
-          isPaused ? "opacity-0" : "opacity-100"
+          isPaused || showGrid ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -285,18 +285,27 @@ function StoryViewerContent({
             </div>
           )}
         </div>
-        <Link
-          href="/"
-          className="p-2 bg-black/20 backdrop-blur-md rounded-full hover:bg-white/20"
-        >
-          <X size={24} />
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Toggle Grid View Button */}
+          <button
+            onClick={() => setShowGrid(true)}
+            className="p-2 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/20 pointer-events-auto"
+          >
+            <LayoutGrid size={24} />
+          </button>
+          <Link
+            href="/"
+            className="p-2 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/20 pointer-events-auto"
+          >
+            <X size={24} />
+          </Link>
+        </div>
       </div>
 
-      {/* 3. INTERACTIONS (Hidden when paused) */}
+      {/* 3. INTERACTIONS */}
       <div
-        className={`absolute right-4 bottom-10 z-50 flex flex-col gap-6 items-center transition-opacity duration-300 ${
-          isPaused ? "opacity-0" : "opacity-100"
+        className={`absolute right-4 bottom-10 z-40 flex flex-col gap-6 items-center transition-opacity duration-300 ${
+          isPaused || showGrid ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
         {verseData && (
@@ -306,7 +315,7 @@ function StoryViewerContent({
                 e.stopPropagation();
                 toggleFavorite(currentSlide.id);
               }}
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-1 pointer-events-auto"
             >
               <div
                 className={`p-3 rounded-full backdrop-blur-md ${
@@ -333,7 +342,7 @@ function StoryViewerContent({
                 );
                 router.push(`/spiritual-gems?ref=${ref}&returnTo=${returnTo}`);
               }}
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-1 pointer-events-auto"
             >
               <div className="p-3 rounded-full bg-black/40 backdrop-blur-md text-white">
                 <MessageCircle size={28} />
@@ -344,9 +353,9 @@ function StoryViewerContent({
         )}
       </div>
 
-      {/* 4. TAP & HOLD ZONES (Facebook/Instagram Style) */}
+      {/* 4. TAP & HOLD ZONES */}
       <div
-        className="absolute inset-0 z-30 flex"
+        className={`absolute inset-0 z-30 flex ${showGrid ? "hidden" : ""}`}
         onMouseDown={() => setIsPaused(true)}
         onMouseUp={() => setIsPaused(false)}
         onMouseLeave={() => setIsPaused(false)}
@@ -427,8 +436,113 @@ function StoryViewerContent({
         </motion.div>
       </AnimatePresence>
 
+      {/* 6. GRID OVERLAY (Messenger Style) */}
+      <AnimatePresence>
+        {showGrid && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl overflow-y-auto overflow-x-hidden p-4 touch-auto select-auto"
+          >
+            <div className="flex justify-between items-center mb-6 sticky top-0 z-10 py-2 bg-black/40 backdrop-blur-sm -mx-4 px-4 rounded-b-xl">
+              <h3 className="text-xl font-bold font-serif">
+                Chapter {currentChapter}
+              </h3>
+              <button
+                onClick={() => setShowGrid(false)}
+                className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pb-20">
+              {slides.map((slide, idx) => {
+                if (slide.type === "visual") {
+                  const vData = slide.data;
+                  return (
+                    <div
+                      key={slide.id}
+                      onClick={() => {
+                        setCurrentIndex(idx);
+                        setProgress(0);
+                        setShowGrid(false);
+                      }}
+                      className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border-2 transition-all ${
+                        currentIndex === idx
+                          ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                          : "border-transparent hover:border-white/20"
+                      }`}
+                    >
+                      <div className="w-full h-full bg-stone-900 relative">
+                        {vData.imageSrc && vData.imageSrc.trim() !== "" && (
+                          <Image
+                            src={vData.imageSrc}
+                            alt=""
+                            fill
+                            className="object-cover opacity-60"
+                          />
+                        )}
+                        <div className="absolute inset-0 p-3 flex flex-col justify-center bg-gradient-to-t from-black via-black/40 to-transparent">
+                          <span className="text-[10px] text-center font-bold text-amber-400 uppercase tracking-widest mb-1">
+                            {vData.description}
+                          </span>
+                          <span className="text-sm text-center font-bold font-serif leading-tight">
+                            {vData.title}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  const vData = slide.data;
+                  const theme = getSpeakerTheme(vData.speaker);
+                  return (
+                    <div
+                      key={slide.id}
+                      onClick={() => {
+                        setCurrentIndex(idx);
+                        setProgress(0);
+                        setShowGrid(false);
+                      }}
+                      className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border-2 transition-all flex flex-col p-4 ${theme.container} ${
+                        currentIndex === idx
+                          ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                          : "border-transparent hover:border-white/20"
+                      }`}
+                    >
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[length:16px_16px]"></div>
+                      <div className="relative z-10 flex-1 flex flex-col">
+                        <div className="mb-2">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${theme.badge}`}
+                          >
+                            {vData.speaker}
+                          </span>
+                        </div>
+                        <p
+                          className={`text-xs line-clamp-6 font-serif ${theme.text}`}
+                        >
+                          {vData.text}
+                        </p>
+                        <div className="mt-auto pt-2">
+                          <span className="text-[10px] font-bold uppercase text-amber-500/80">
+                            Verse {vData.verseDisplay}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Finish Overlay */}
-      {isLastSlide && (
+      {isLastSlide && !showGrid && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-2xl z-50">
           <div className="text-center p-8">
             <h2 className="text-4xl font-serif font-bold mb-2">

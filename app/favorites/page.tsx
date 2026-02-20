@@ -1,49 +1,152 @@
-'use client';
-import React from 'react';
-import { ArrowLeft, Heart, Trash2, BookOpen } from 'lucide-react';
-import Link from 'next/link';
-import { useFavorites } from '@/app/lib/hooks';
-import { isaiahChapters } from '@/app/lib/data';
+"use client";
+import React from "react";
+import { ArrowLeft, Heart, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useFavorites } from "@/app/lib/hooks";
+import { isaiahChapters } from "@/app/lib/data";
+import { ChapterData, Verse } from "@/app/types";
+
+// Helper function to recreate the order of items and find the exact index
+// so the user can be routed to the correct slide.
+const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
+  const items: { id: string }[] = [];
+  const sortedVisuals = [...chapter.visuals].sort(
+    (a, b) => a.startVerse - b.startVerse,
+  );
+  const sortedVerses = [...chapter.verses].sort((a, b) => a.verse - b.verse);
+
+  let currentGroup: Verse[] = [];
+  const addedVisuals = new Set<number>();
+  const chapterNumber = chapter.chapter;
+
+  const flushGroup = () => {
+    if (currentGroup.length === 0) return;
+    const firstVerse = currentGroup[0];
+
+    const segmentIndex = sortedVisuals.findLastIndex(
+      (v) => v.startVerse <= firstVerse.verse,
+    );
+    const visual = sortedVisuals[segmentIndex];
+
+    if (
+      visual &&
+      firstVerse.verse === visual.startVerse &&
+      !addedVisuals.has(visual.startVerse)
+    ) {
+      items.push({ id: `chapter-${chapterNumber}-visual-${firstVerse.verse}` });
+      addedVisuals.add(visual.startVerse);
+    }
+
+    const uniqueVerseId = `chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
+    items.push({ id: uniqueVerseId });
+    currentGroup = [];
+  };
+
+  for (let i = 0; i < sortedVerses.length; i++) {
+    const verse = sortedVerses[i];
+    if (currentGroup.length === 0) {
+      currentGroup.push(verse);
+    } else {
+      const prevVerse = currentGroup[currentGroup.length - 1];
+      if (verse.groupId && prevVerse.groupId === verse.groupId) {
+        currentGroup.push(verse);
+      } else {
+        flushGroup();
+        currentGroup.push(verse);
+      }
+    }
+  }
+  flushGroup();
+
+  return items.findIndex((item) => item.id === targetId);
+};
 
 export default function FavoritesPage() {
   const { favorites, toggleFavorite, isLoaded } = useFavorites();
 
   const getVerseContent = (id: string) => {
-    // Basic lookup for Chapter 1
-    const chapterData = isaiahChapters['1']; 
-    
-    if (id.startsWith('verse-')) {
-      const verseNum = parseInt(id.replace('verse-', ''));
-      const verse = chapterData.verses.find(v => v.verse === verseNum);
-      return verse ? { 
-        title: `Isaiah 1:${verse.verse}`, 
-        text: verse.text,
-        isVisual: false 
-      } : null;
+    let chapterNum = "1";
+    let type = "";
+    let verseNum = 0;
+
+    // Parse the new ID format
+    const newFormatMatch = id.match(/chapter-(\d+)-(verse|visual)-(\d+)/);
+
+    if (newFormatMatch) {
+      chapterNum = newFormatMatch[1];
+      type = newFormatMatch[2];
+      verseNum = parseInt(newFormatMatch[3], 10);
     }
-    
-    if (id.startsWith('visual-')) {
-      const verseNum = parseInt(id.replace('visual-', ''));
-      const visual = chapterData.visuals.find(v => v.startVerse === verseNum);
-      return visual ? { 
-        title: visual.title, 
-        text: visual.description, 
-        isVisual: true 
-      } : null;
+    // Fallback for old saved IDs
+    else if (id.startsWith("verse-")) {
+      type = "verse";
+      const parts = id.replace("verse-", "").split("-");
+      verseNum = parseInt(parts[0], 10);
+    } else if (id.startsWith("visual-")) {
+      type = "visual";
+      verseNum = parseInt(id.replace("visual-", ""), 10);
+    } else {
+      return null;
     }
+
+    const chapterData = isaiahChapters[chapterNum];
+    if (!chapterData) return null;
+
+    // Calculate the correct slide index for navigation
+    const slideIndex = getSlideIndex(chapterData, id);
+    const linkHref =
+      slideIndex >= 0
+        ? `/isaiah/${chapterNum}?slide=${slideIndex}`
+        : `/isaiah/${chapterNum}`;
+
+    // Return the correct content based on type
+    if (type === "verse") {
+      const verse = chapterData.verses.find((v) => v.verse === verseNum);
+      return verse
+        ? {
+            title: `Isaiah ${chapterNum}:${verse.verse}`,
+            text: verse.text,
+            isVisual: false,
+            linkHref,
+          }
+        : null;
+    }
+
+    if (type === "visual") {
+      const visual = chapterData.visuals.find((v) => v.startVerse === verseNum);
+      return visual
+        ? {
+            title: visual.title,
+            text: visual.description,
+            isVisual: true,
+            linkHref,
+          }
+        : null;
+    }
+
     return null;
   };
 
-  if (!isLoaded) return <div className="min-h-screen bg-[#FDFBF7] p-6 text-center text-stone-400">Loading...</div>;
+  if (!isLoaded)
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] p-6 text-center text-stone-400">
+        Loading...
+      </div>
+    );
 
   return (
     <main className="min-h-screen bg-[#FDFBF7] p-6">
       <header className="flex items-center justify-between mb-8 sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-sm z-10 py-4">
         <div className="flex items-center gap-4">
-          <Link href="/" className="p-2 bg-white border border-stone-200 rounded-full text-stone-600 hover:bg-stone-100 transition-colors shadow-sm">
+          <Link
+            href="/"
+            className="p-2 bg-white border border-stone-200 rounded-full text-stone-600 hover:bg-stone-100 transition-colors shadow-sm"
+          >
             <ArrowLeft size={24} />
           </Link>
-          <h1 className="font-serif text-2xl font-bold text-stone-900">Favorites</h1>
+          <h1 className="font-serif text-2xl font-bold text-stone-900">
+            Favorites
+          </h1>
         </div>
       </header>
 
@@ -52,8 +155,12 @@ export default function FavoritesPage() {
           <div className="w-20 h-20 bg-stone-100 rounded-full flex items-center justify-center mb-6 text-stone-300">
             <Heart size={40} />
           </div>
-          <p className="font-serif text-2xl text-stone-600 mb-2 font-bold">No favorites yet</p>
-          <p className="text-sm text-stone-400">Tap the heart icon while reading.</p>
+          <p className="font-serif text-2xl text-stone-600 mb-2 font-bold">
+            No favorites yet
+          </p>
+          <p className="text-sm text-stone-400">
+            Tap the heart icon while reading.
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 max-w-2xl mx-auto pb-20">
@@ -62,28 +169,36 @@ export default function FavoritesPage() {
             if (!content) return null;
 
             return (
-              <div key={id} className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative overflow-hidden group">
-                {/* Header Row */}
-                <div className="flex justify-between items-center mb-4 border-b border-stone-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${content.isVisual ? 'bg-amber-500' : 'bg-stone-800'}`}></div>
-                    <h3 className="font-bold text-stone-900 tracking-wide uppercase text-sm">
-                      {content.title}
-                    </h3>
+              <Link href={content.linkHref} key={id} className="block group">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 relative overflow-hidden transition-all hover:border-amber-500 hover:shadow-md cursor-pointer">
+                  {/* Header Row */}
+                  <div className="flex justify-between items-center mb-4 border-b border-stone-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-2 h-2 rounded-full ${content.isVisual ? "bg-amber-500" : "bg-stone-800"}`}
+                      ></div>
+                      <h3 className="font-bold text-stone-900 tracking-wide uppercase text-sm group-hover:text-amber-600 transition-colors">
+                        {content.title}
+                      </h3>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevents navigating to the verse when tapping Trash
+                        e.stopPropagation(); // Stops the event from bubbling up to the Link
+                        toggleFavorite(id);
+                      }}
+                      className="text-stone-300 hover:text-red-500 transition-colors p-2 -mr-2"
+                    >
+                      <Trash2 size={18} className="text-red-500" />
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => toggleFavorite(id)}
-                    className="text-stone-300 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 size={18} className="text-red-500"/>
-                  </button>
-                </div>
 
-                {/* Content Body */}
-                <div className="text-stone-700 font-serif leading-relaxed text-lg">
-                  {content.text.replace(/\*\*/g, '')}
+                  {/* Content Body */}
+                  <div className="text-stone-700 font-serif leading-relaxed text-lg">
+                    {content.text.replace(/\*\*/g, "")}
+                  </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
