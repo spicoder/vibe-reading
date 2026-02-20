@@ -1,24 +1,27 @@
 "use client";
-import {
-  useState,
-  useCallback,
-  useEffect,
-  Suspense,
-  useMemo,
-  useRef,
-} from "react";
+
+import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { X, Map, Heart, MessageCircle, Layers } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { X, Map, Heart, MessageCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChapterData, Verse, VisualScene } from "@/app/lib/data";
 import { useFavorites, useProgress } from "@/app/lib/hooks";
+import Link from "next/link";
+import Image from "next/image";
 
-// --- Types ---
 type StoryItem =
   | { type: "visual"; data: VisualScene; id: string; segmentIndex: number }
-  | { type: "verse"; data: Verse; id: string; segmentIndex: number };
+  | {
+      type: "verse";
+      data: {
+        verses: Verse[];
+        speaker: string;
+        text: string;
+        verseDisplay: string;
+      };
+      id: string;
+      segmentIndex: number;
+    };
 
 interface StoryViewerProps {
   chapter: ChapterData;
@@ -32,28 +35,75 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   );
   const sortedVerses = [...chapter.verses].sort((a, b) => a.verse - b.verse);
 
-  sortedVerses.forEach((verse) => {
+  let currentGroup: Verse[] = [];
+
+  const flushGroup = () => {
+    if (currentGroup.length === 0) return;
+
+    const firstVerse = currentGroup[0];
+    const lastVerse = currentGroup[currentGroup.length - 1];
+
+    // Find the current segment based on the first verse of the thought
     const segmentIndex = sortedVisuals.findLastIndex(
-      (v) => v.startVerse <= verse.verse,
+      (v) => v.startVerse <= firstVerse.verse,
     );
     const visual = sortedVisuals[segmentIndex];
 
-    if (verse.verse === visual.startVerse) {
+    // Add visual if it exactly matches the start of this verse group
+    if (visual && firstVerse.verse === visual.startVerse) {
       items.push({
         type: "visual",
         data: visual,
-        id: `visual-${verse.verse}`,
-        segmentIndex,
+        id: `visual-${firstVerse.verse}`,
+        segmentIndex: Math.max(0, segmentIndex),
       });
     }
 
+    // Format display string
+    const isGrouped = currentGroup.length > 1;
+    const verseDisplay = isGrouped
+      ? `${firstVerse.verse}-${lastVerse.verse}`
+      : `${firstVerse.verse}`;
+
+    // Combine texts
+    const combinedText = currentGroup.map((v) => v.text).join(" ");
+    const speaker = firstVerse.speaker; // Take the speaker from the first verse
+
     items.push({
       type: "verse",
-      data: verse,
-      id: `verse-${verse.verse}`,
-      segmentIndex,
+      data: {
+        verses: currentGroup,
+        speaker,
+        text: combinedText,
+        verseDisplay,
+      },
+      id: `verse-${firstVerse.verse}`,
+      segmentIndex: Math.max(0, segmentIndex),
     });
-  });
+
+    currentGroup = [];
+  };
+
+  for (let i = 0; i < sortedVerses.length; i++) {
+    const verse = sortedVerses[i];
+    if (currentGroup.length === 0) {
+      currentGroup.push(verse);
+    } else {
+      const prevVerse = currentGroup[currentGroup.length - 1];
+      // If the verse has a groupId and it matches the previous verse, add it to the group
+      if (verse.groupId && prevVerse.groupId === verse.groupId) {
+        currentGroup.push(verse);
+      } else {
+        // Otherwise, flush the current group and start a new one
+        flushGroup();
+        currentGroup.push(verse);
+      }
+    }
+  }
+
+  // Flush any remaining verses
+  flushGroup();
+
   return items;
 };
 
@@ -263,7 +313,7 @@ function StoryViewerContent({
               onClick={(e) => {
                 e.stopPropagation();
                 const ref = encodeURIComponent(
-                  `Isaias ${currentChapter}:${currentSlide.data.verse}`,
+                  `Isaias ${currentChapter}:${currentSlide.data.verseDisplay}`,
                 );
                 const returnTo = encodeURIComponent(
                   `/Isaias/${currentChapter}?slide=${currentIndex}`,
@@ -363,7 +413,7 @@ function StoryViewerContent({
               </div>
               <div className="absolute bottom-12 left-8 z-20">
                 <p className="font-bold uppercase tracking-widest text-amber-500/80 text-xs">
-                  Isaias {currentChapter}:{currentSlide.data.verse}
+                  Isaias {currentChapter}:{currentSlide.data.verseDisplay}
                 </p>
               </div>
             </div>
