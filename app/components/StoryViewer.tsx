@@ -369,15 +369,17 @@ function StoryViewerContent({
           className="absolute inset-0 flex flex-col justify-center items-center"
         >
           {visualData ? (
-            <div className="w-full h-full flex flex-col items-center justify-center text-center relative">
+            <div className="w-full h-full flex flex-col items-center justify-center text-center relative bg-black">
               <div className="absolute inset-0">
-                <Image
-                  src={visualData.imageSrc}
-                  alt={visualData.alt}
-                  fill
-                  className="object-contain transition-transform duration-700"
-                  priority
-                />
+                {visualData.imageSrc && visualData.imageSrc.trim() !== "" ? (
+                  <Image
+                    src={visualData.imageSrc}
+                    alt={visualData.alt || ""}
+                    fill
+                    className="object-contain transition-transform duration-700"
+                    priority
+                  />
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60"></div>
               </div>
               <motion.div className="relative z-10 p-6">

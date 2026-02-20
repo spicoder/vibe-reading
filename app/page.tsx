@@ -4,7 +4,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Sparkles, Play, Heart, Bookmark, CheckCircle2 } from "lucide-react";
-import { isaiahChapters, ChapterData } from "@/app/lib/data";
+import { isaiahChapters } from "@/app/lib/data";
+import { ChapterData } from "./types";
 import { useProgress } from "@/app/lib/hooks";
 
 export default function Home() {
@@ -56,12 +57,15 @@ export default function Home() {
 
           {nextChapter?.visuals[0] && (
             <div className="absolute inset-0 z-0">
-              <Image
-                src={nextChapter.visuals[0].imageSrc}
-                alt="Background"
-                fill
-                className="object-cover opacity-40"
-              />
+              {nextChapter.visuals[0].imageSrc &&
+              nextChapter.visuals[0].imageSrc.trim() !== "" ? (
+                <Image
+                  src={nextChapter.visuals[0].imageSrc}
+                  alt="Background"
+                  fill
+                  className="object-cover opacity-40"
+                />
+              ) : null}
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent"></div>
             </div>
           )}

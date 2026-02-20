@@ -11,8 +11,8 @@ export type VisualScene = {
   startVerse: number;
   title: string;
   description: string;
-  imageSrc: string;
-  alt: string;
+  imageSrc?: string;
+  alt?: string;
 };
 
 export type ChapterData = {
