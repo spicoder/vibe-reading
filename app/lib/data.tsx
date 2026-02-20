@@ -1,4 +1,3 @@
-// --- TYPES ---
 export type Verse = {
   verse: number;
   speaker: string;
@@ -6,7 +5,7 @@ export type Verse = {
 };
 
 export type VisualScene = {
-  startVerse: number; // The visual appears before this verse
+  startVerse: number;
   title: string;
   description: string;
   imageSrc: string;
@@ -14,18 +13,14 @@ export type VisualScene = {
 };
 
 export type ChapterData = {
-  book: string;
   chapter: number;
   visuals: VisualScene[];
   verses: Verse[];
 };
 
-// --- DATA STORE ---
 export const isaiahChapters: Record<string, ChapterData> = {
   "1": {
-    book: "Isaiah",
     chapter: 1,
-    // These match your 4 Outline points
     visuals: [
       {
         startVerse: 1,
@@ -215,7 +210,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "2": {
-    book: "Isaiah",
     chapter: 2,
     visuals: [
       {
@@ -359,7 +353,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "3": {
-    book: "Isaiah",
     chapter: 3,
     visuals: [
       {
@@ -511,7 +504,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "4": {
-    book: "Isaiah",
     chapter: 4,
     visuals: [
       {
@@ -533,7 +525,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
       {
         verse: 1,
         speaker: "Pitong Babae",
-        text: "“Kakainin namin ang sarili naming tinapay At isusuot ang sarili naming damit; Hayaan mo lang na tawagin kami sa pangalan mo Para maalis ang kahihiyan namin.”",
+        text: "At susunggaban ng pitong babae ang isang lalaki sa araw na iyon at sasabihin: “Kakainin namin ang sarili naming tinapay At isusuot ang sarili naming damit; Hayaan mo lang na tawagin kami sa pangalan mo Para maalis ang kahihiyan namin.”",
       },
       {
         verse: 2,
@@ -563,7 +555,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "5": {
-    book: "Isaiah",
     chapter: 5,
     visuals: [
       {
@@ -742,7 +733,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "6": {
-    book: "Isaiah",
     chapter: 6,
     visuals: [
       {
@@ -816,7 +806,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         text: "“Sino ang isusugo ko, at sino ang magdadala ng mensahe namin?”",
       },
       {
-        verse: 8,
+        verse: 8.1,
         speaker: "Isaias",
         text: "At sinabi ko: “Narito ako! Isugo mo ako!”",
       },
@@ -836,7 +826,7 @@ export const isaiahChapters: Record<string, ChapterData> = {
         text: "Kaya sinabi ko: “Hanggang kailan, O Jehova?”",
       },
       {
-        verse: 11,
+        verse: 11.1,
         speaker: "Jehova",
         text: "“Hanggang sa ang mga lunsod ay gumuho at wala nang manirahan doon At ang mga bahay ay mawalan ng tao At ang lupain ay mawasak at maging tiwangwang;”",
       },
@@ -853,7 +843,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "7": {
-    book: "Isaiah",
     chapter: 7,
     visuals: [
       {
@@ -967,7 +956,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "8": {
-    book: "Isaiah",
     chapter: 8,
     visuals: [
       {
@@ -1083,7 +1071,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "9": {
-    book: "Isaiah",
     chapter: 9,
     visuals: [
       {
@@ -1195,7 +1182,6 @@ export const isaiahChapters: Record<string, ChapterData> = {
     ],
   },
   "10": {
-    book: "Isaiah",
     chapter: 10,
     visuals: [
       {

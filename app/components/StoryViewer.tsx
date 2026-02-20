@@ -28,13 +28,13 @@ interface StoryViewerProps {
 const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   const items: StoryItem[] = [];
   const sortedVisuals = [...chapter.visuals].sort(
-    (a, b) => a.startVerse - b.startVerse
+    (a, b) => a.startVerse - b.startVerse,
   );
   const sortedVerses = [...chapter.verses].sort((a, b) => a.verse - b.verse);
 
   sortedVerses.forEach((verse) => {
     const segmentIndex = sortedVisuals.findLastIndex(
-      (v) => v.startVerse <= verse.verse
+      (v) => v.startVerse <= verse.verse,
     );
     const visual = sortedVisuals[segmentIndex];
 
@@ -85,7 +85,7 @@ function StoryViewerContent({
 
   const currentSegmentIndex = currentSlide.segmentIndex;
   const segmentSlides = slides.filter(
-    (s) => s.segmentIndex === currentSegmentIndex
+    (s) => s.segmentIndex === currentSegmentIndex,
   );
   const indexInSegment = segmentSlides.indexOf(currentSlide);
 
@@ -110,7 +110,7 @@ function StoryViewerContent({
   useEffect(() => {
     if (isPaused || isLastSlide) return;
 
-    const SLIDE_DURATION = 8000; // 8 seconds per slide
+    const SLIDE_DURATION = 15000; // 15 seconds per slide
     const INTERVAL_MS = 50; // Update every 50ms
     const INCREMENT = (INTERVAL_MS / SLIDE_DURATION) * 100;
 
@@ -178,8 +178,8 @@ function StoryViewerContent({
                     idx < indexInSegment
                       ? "100%"
                       : idx === indexInSegment
-                      ? `${progress}%`
-                      : "0%",
+                        ? `${progress}%`
+                        : "0%",
                 }}
               />
             </div>
@@ -263,10 +263,10 @@ function StoryViewerContent({
               onClick={(e) => {
                 e.stopPropagation();
                 const ref = encodeURIComponent(
-                  `Isaias ${currentChapter}:${currentSlide.data.verse}`
+                  `Isaias ${currentChapter}:${currentSlide.data.verse}`,
                 );
                 const returnTo = encodeURIComponent(
-                  `/Isaias/${currentChapter}?slide=${currentIndex}`
+                  `/Isaias/${currentChapter}?slide=${currentIndex}`,
                 );
                 router.push(`/spiritual-gems?ref=${ref}&returnTo=${returnTo}`);
               }}
