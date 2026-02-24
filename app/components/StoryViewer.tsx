@@ -328,7 +328,7 @@ function StoryViewerContent({
                   fill={isFavorite(currentSlide.id) ? "currentColor" : "none"}
                 />
               </div>
-              <span className="text-[10px] font-bold">Save</span>
+              <span className="text-[10px] font-bold">Like</span>
             </button>
             <button
               onClick={(e) => {
