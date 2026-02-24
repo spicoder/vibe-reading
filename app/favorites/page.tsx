@@ -93,8 +93,8 @@ export default function FavoritesPage() {
     const slideIndex = getSlideIndex(chapterData, id);
     const linkHref =
       slideIndex >= 0
-        ? `/isaiah/${chapterNum}?slide=${slideIndex}`
-        : `/isaiah/${chapterNum}`;
+        ? `book/isaiah/${chapterNum}?slide=${slideIndex}`
+        : `book/isaiah/${chapterNum}`;
 
     if (type === "verse") {
       const verse = chapterData.verses.find((v) => v.verse === verseNum);

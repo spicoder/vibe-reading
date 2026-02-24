@@ -43,7 +43,17 @@ export type StoryItem =
       segmentIndex: number;
     };
 
+export type BookData = {
+  id: string;
+  title: string;
+  coverImage?: string;
+  chapters: Record<string, ChapterData>;
+};
+
 export interface StoryViewerProps {
+  bookId: string;
+  bookTitle: string;
   chapter: ChapterData;
-  nextChapterId: string | null;
+  nextChapterUrl: string | null;
+  bookUrl: string;
 }

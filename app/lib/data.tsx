@@ -1,4 +1,4 @@
-import { ChapterData } from "../types";
+import { ChapterData, BookData } from "../types";
 
 export const isaiahChapters: Record<string, ChapterData> = {
   "1": {
@@ -1289,4 +1289,15 @@ export const isaiahChapters: Record<string, ChapterData> = {
       },
     ],
   },
+};
+
+export const bibleBooks: Record<string, BookData> = {
+  isaiah: {
+    id: "isaiah",
+    title: "Isaiah",
+    coverImage: "/pictures/placeholder.png",
+    chapters: isaiahChapters,
+  },
+  // Future books go here
+  // genesis: { id: "genesis", title: "Genesis", ... }
 };

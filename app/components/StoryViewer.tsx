@@ -110,12 +110,12 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
 };
 
 function StoryViewerContent({
+  bookId,
+  bookTitle,
   chapter,
-  nextChapterId,
-}: {
-  chapter: ChapterData;
-  nextChapterId: string | null;
-}) {
+  nextChapterUrl,
+  bookUrl,
+}: StoryViewerProps) {
   const currentChapter = chapter.chapter;
   const slides = useMemo(() => getStoryItems(chapter), [chapter]);
   const totalSegments = chapter.visuals.length;
@@ -183,10 +183,9 @@ function StoryViewerContent({
 
   useEffect(() => {
     if (isLastSlide) {
-      markAsCompleted(String(currentChapter));
+      markAsCompleted(`${bookId}-${currentChapter}`);
     }
-  }, [isLastSlide, currentChapter, markAsCompleted]);
-
+  }, [isLastSlide, currentChapter, bookId, markAsCompleted]);
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -294,7 +293,7 @@ function StoryViewerContent({
             <LayoutGrid size={24} />
           </button>
           <Link
-            href="/"
+            href={bookUrl}
             className="p-2 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/20 pointer-events-auto"
           >
             <X size={24} />
@@ -335,10 +334,10 @@ function StoryViewerContent({
               onClick={(e) => {
                 e.stopPropagation();
                 const ref = encodeURIComponent(
-                  `Isaias ${currentChapter}:${verseData.verseDisplay}`,
+                  `${bookTitle} ${currentChapter}:${verseData.verseDisplay}`,
                 );
                 const returnTo = encodeURIComponent(
-                  `/isaiah/${currentChapter}?slide=${currentIndex}`,
+                  `/book/${bookId}/${currentChapter}?slide=${currentIndex}`,
                 );
                 router.push(`/spiritual-gems?ref=${ref}&returnTo=${returnTo}`);
               }}
@@ -552,16 +551,16 @@ function StoryViewerContent({
               You've finished reading Chapter {currentChapter}.
             </p>
             <div className="flex flex-col gap-4 items-center">
-              {nextChapterId && (
+              {nextChapterUrl && (
                 <Link
-                  href={`/isaiah/${nextChapterId}`}
+                  href={nextChapterUrl}
                   className="bg-amber-500 text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest"
                 >
                   Next Chapter
                 </Link>
               )}
               <Link
-                href="/"
+                href={bookUrl}
                 className="bg-white/10 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest"
               >
                 Library
@@ -575,12 +574,21 @@ function StoryViewerContent({
 }
 
 export default function StoryViewer({
+  bookId,
+  bookTitle,
   chapter,
-  nextChapterId,
+  nextChapterUrl,
+  bookUrl,
 }: StoryViewerProps) {
   return (
     <Suspense fallback={<div className="fixed inset-0 bg-black" />}>
-      <StoryViewerContent chapter={chapter} nextChapterId={nextChapterId} />
+      <StoryViewerContent
+        bookId={bookId}
+        bookTitle={bookTitle}
+        bookUrl={bookUrl}
+        chapter={chapter}
+        nextChapterUrl={nextChapterUrl}
+      />
     </Suspense>
   );
 }
