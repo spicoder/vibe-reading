@@ -8,11 +8,129 @@ import {
   Trash2,
   Edit3,
   MessageCircle,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGems } from "@/app/lib/hooks";
+import { bibleBooks } from "@/app/lib/data";
+import { ChapterData, Verse } from "@/app/types";
 
+// --- HELPER FUNCTIONS ---
+function parseReference(ref: string) {
+  // Matches "BookName Chapter:Verses" e.g., "Isaiah 1:18-20"
+  const match = ref.match(/(.+?)\s+(\d+):([\d-]+)/);
+  if (!match) return null;
+  return {
+    bookTitle: match[1],
+    chapterStr: match[2],
+    versesStr: match[3],
+  };
+}
+
+function getVerseTextForRef(ref: string) {
+  const parsed = parseReference(ref);
+  if (!parsed) return null;
+
+  const bookKey = parsed.bookTitle.toLowerCase();
+  const book = bibleBooks[bookKey];
+  if (!book) return null;
+
+  const chapterData = book.chapters[parsed.chapterStr];
+  if (!chapterData) return null;
+
+  const [startStr, endStr] = parsed.versesStr.split("-");
+  const start = parseInt(startStr, 10);
+  const end = endStr ? parseInt(endStr, 10) : start;
+
+  const verses = chapterData.verses.filter(
+    (v) => v.verse >= start && v.verse <= end,
+  );
+
+  if (verses.length === 0) return null;
+  return verses.map((v) => v.text).join(" ");
+}
+
+// Mimics the logic in StoryViewer to accurately index the slide
+function getSlideIndexForVerse(
+  chapter: ChapterData,
+  targetVerse: number,
+): number {
+  let slideIndex = 0;
+  const sortedVisuals = [...chapter.visuals].sort(
+    (a, b) => a.startVerse - b.startVerse,
+  );
+  const sortedVerses = [...chapter.verses].sort((a, b) => a.verse - b.verse);
+
+  let currentGroup: Verse[] = [];
+  const addedVisuals = new Set<number>();
+
+  const flushGroup = () => {
+    if (currentGroup.length === 0) return null;
+    const firstVerse = currentGroup[0];
+    const segmentIndex = sortedVisuals.findLastIndex(
+      (v) => v.startVerse <= firstVerse.verse,
+    );
+    const visual = sortedVisuals[segmentIndex];
+
+    if (
+      visual &&
+      firstVerse.verse === visual.startVerse &&
+      !addedVisuals.has(visual.startVerse)
+    ) {
+      addedVisuals.add(visual.startVerse);
+      slideIndex++;
+    }
+
+    const found = currentGroup.some((v) => v.verse === targetVerse);
+    const currentIndex = slideIndex;
+    slideIndex++;
+    currentGroup = [];
+    return found ? currentIndex : null;
+  };
+
+  for (let i = 0; i < sortedVerses.length; i++) {
+    const verse = sortedVerses[i];
+    if (currentGroup.length === 0) {
+      currentGroup.push(verse);
+    } else {
+      const prevVerse = currentGroup[currentGroup.length - 1];
+      if (verse.groupId && prevVerse.groupId === verse.groupId) {
+        currentGroup.push(verse);
+      } else {
+        const foundIdx = flushGroup();
+        if (foundIdx !== null) return foundIdx;
+        currentGroup.push(verse);
+      }
+    }
+  }
+
+  const foundIdx = flushGroup();
+  if (foundIdx !== null) return foundIdx;
+
+  return 0;
+}
+
+function getStoryLink(ref: string) {
+  const parsed = parseReference(ref);
+  if (!parsed) return "/";
+
+  const bookKey = parsed.bookTitle.toLowerCase();
+  const book = bibleBooks[bookKey];
+  if (!book) return `/book/${bookKey}/${parsed.chapterStr}`;
+
+  const chapterData = book.chapters[parsed.chapterStr];
+  if (!chapterData) return `/book/${bookKey}/${parsed.chapterStr}`;
+
+  const [startStr] = parsed.versesStr.split("-");
+  const startVerse = parseInt(startStr, 10);
+
+  const slideIndex = getSlideIndexForVerse(chapterData, startVerse);
+
+  return `/book/${bookKey}/${parsed.chapterStr}?slide=${slideIndex}`;
+}
+
+// --- COMPONENTS ---
 function GemsEditor({ initialRef }: { initialRef: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,9 +184,29 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
           <p className="text-xs font-bold uppercase text-amber-600 mb-1 tracking-widest">
             Reference
           </p>
-          <p className="font-serif text-2xl text-stone-900 font-bold">
-            {initialRef}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-serif text-2xl text-stone-900 font-bold">
+              {initialRef}
+            </p>
+            <Link
+              href={getStoryLink(initialRef)}
+              className="p-2 bg-amber-50 text-amber-600 rounded-full hover:bg-amber-100 transition-colors"
+              title="Read Chapter"
+            >
+              <BookOpen size={18} />
+            </Link>
+          </div>
+          {(() => {
+            const verseText = getVerseTextForRef(initialRef);
+            if (verseText) {
+              return (
+                <p className="text-stone-600 font-serif italic text-sm leading-relaxed border-t border-stone-100 pt-3 mt-1">
+                  "{verseText}"
+                </p>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         <div className="space-y-4">
@@ -107,8 +245,6 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
 function GemsList() {
   const { allGems, deleteGem, isLoaded } = useGems();
   const [searchTerm, setSearchTerm] = useState("");
-
-  // NEW: State for custom delete modal
   const [gemToDelete, setGemToDelete] = useState<string | null>(null);
 
   if (!isLoaded)
@@ -180,7 +316,7 @@ function GemsList() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 max-w-2xl mx-auto pb-20">
+          <div className="grid gap-5 max-w-2xl mx-auto pb-20">
             {filteredGems.length === 0 && (
               <p className="text-center text-stone-400 mt-10">
                 No matches found.
@@ -189,43 +325,73 @@ function GemsList() {
             {filteredGems.map((gem) => (
               <div
                 key={gem.ref}
-                className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 relative hover:border-amber-200 transition-colors"
+                className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 relative hover:border-amber-300 transition-colors group"
               >
                 <div className="flex justify-between items-start mb-3">
                   <Link
-                    href={`/spiritual-gems?ref=${encodeURIComponent(gem.ref)}`}
-                    className="flex-1"
+                    href={getStoryLink(gem.ref)}
+                    className="flex-1 flex items-center gap-2 group/ref w-fit"
+                    title="Jump to Story"
                   >
-                    <span className="inline-block px-2 py-1 rounded bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-widest mb-1">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-widest group-hover/ref:bg-amber-200 transition-colors shadow-sm">
                       {gem.ref}
+                      <BookOpen
+                        size={14}
+                        className="opacity-70 group-hover/ref:opacity-100"
+                      />
                     </span>
                   </Link>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setGemToDelete(gem.ref); // Trigger the custom modal
+                      setGemToDelete(gem.ref);
                     }}
                     className="p-2 -mt-2 -mr-2 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                   >
                     <Trash2 size={18} className="text-red-500" />
                   </button>
                 </div>
-                <Link
-                  href={`/spiritual-gems?ref=${encodeURIComponent(gem.ref)}`}
-                  className="block group"
-                >
-                  <p className="text-stone-600 font-serif line-clamp-3 text-lg leading-relaxed group-hover:text-stone-900 transition-colors">
+
+                {(() => {
+                  const verseText = getVerseTextForRef(gem.ref);
+                  if (verseText) {
+                    return (
+                      <Link href={getStoryLink(gem.ref)} className="block mb-4">
+                        <blockquote className="pl-4 border-l-4 border-amber-200 text-stone-500 font-serif italic text-base line-clamp-3 hover:text-stone-700 transition-colors">
+                          "{verseText}"
+                        </blockquote>
+                      </Link>
+                    );
+                  }
+                  return null;
+                })()}
+
+                <div className="bg-stone-50 rounded-xl p-4 border border-stone-100">
+                  <p className="text-stone-800 font-serif text-lg leading-relaxed whitespace-pre-wrap">
                     {gem.content || (
-                      <span className="italic text-stone-300">
+                      <span className="italic text-stone-400">
                         Empty note...
                       </span>
                     )}
                   </p>
-                  <div className="flex items-center gap-1 text-xs text-amber-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Edit3 size={12} /> Tap to edit
-                  </div>
-                </Link>
+                </div>
+
+                {/* Explicit Action Buttons */}
+                <div className="mt-4 flex gap-2">
+                  <Link
+                    href={getStoryLink(gem.ref)}
+                    className="flex-1 py-2.5 bg-stone-900 text-white rounded-lg flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider hover:bg-stone-800 transition-colors"
+                  >
+                    <BookOpen size={16} /> Read in Story
+                  </Link>
+                  <Link
+                    href={`/spiritual-gems?ref=${encodeURIComponent(gem.ref)}`}
+                    className="flex-1 py-2.5 bg-amber-100 text-amber-900 rounded-lg flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider hover:bg-amber-200 transition-colors"
+                  >
+                    <Edit3 size={16} /> Edit Note
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

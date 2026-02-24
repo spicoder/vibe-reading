@@ -3,7 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound, useParams } from "next/navigation";
-import { Sparkles, Play, ChevronLeft, CheckCircle2 } from "lucide-react";
+import {
+  Sparkles,
+  Play,
+  ChevronLeft,
+  CheckCircle2,
+  Heart,
+  Bookmark,
+} from "lucide-react";
 import { bibleBooks } from "@/app/lib/data";
 import { useProgress } from "@/app/lib/hooks";
 
@@ -37,16 +44,32 @@ export default function BookPage() {
 
   return (
     <main className="min-h-screen bg-[#FDFBF7] pb-24">
-      <header className="px-6 pt-12 pb-6 flex items-center gap-4 bg-white/50 backdrop-blur-sm sticky top-0 z-50">
-        <Link
-          href="/"
-          className="p-2 bg-stone-100 rounded-full text-stone-600 hover:bg-stone-200"
-        >
-          <ChevronLeft size={20} />
-        </Link>
-        <h1 className="text-2xl font-black font-serif text-stone-900 tracking-tight uppercase">
-          {book.title}
-        </h1>
+      <header className="px-6 pt-12 pb-6 flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="p-2 bg-stone-100 rounded-full text-stone-600 hover:bg-stone-200 transition-colors"
+          >
+            <ChevronLeft size={20} />
+          </Link>
+          <h1 className="text-2xl font-black font-serif text-stone-900 tracking-tight uppercase">
+            {book.title}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/favorites"
+            className="p-2 bg-stone-100 rounded-full text-stone-600 hover:bg-amber-100 hover:text-amber-600 transition-colors"
+          >
+            <Heart size={20} />
+          </Link>
+          <Link
+            href="/spiritual-gems"
+            className="p-2 bg-stone-100 rounded-full text-stone-600 hover:bg-amber-100 hover:text-amber-600 transition-colors"
+          >
+            <Bookmark size={20} />
+          </Link>
+        </div>
       </header>
 
       {/* Hero Section */}

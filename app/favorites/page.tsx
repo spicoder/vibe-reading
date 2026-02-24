@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { ArrowLeft, Heart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useFavorites } from "@/app/lib/hooks";
-import { isaiahChapters } from "@/app/lib/data";
+import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
 
 const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
@@ -61,21 +61,24 @@ const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
 
 export default function FavoritesPage() {
   const { favorites, toggleFavorite, isLoaded } = useFavorites();
-
-  // NEW: State for our custom delete modal
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const getVerseContent = (id: string) => {
+    let bookId = "isaiah"; // Fallback for older favorites
     let chapterNum = "1";
     let type = "";
     let verseNum = 0;
 
-    const newFormatMatch = id.match(/chapter-(\d+)-(verse|visual)-(\d+)/);
+    // Supports optional bookId prefix (e.g., genesis-chapter-1-verse-1-0)
+    const newFormatMatch = id.match(
+      /^(?:([a-zA-Z0-9]+)-)?chapter-(\d+)-(verse|visual)-(\d+)/,
+    );
 
     if (newFormatMatch) {
-      chapterNum = newFormatMatch[1];
-      type = newFormatMatch[2];
-      verseNum = parseInt(newFormatMatch[3], 10);
+      bookId = newFormatMatch[1] || "isaiah";
+      chapterNum = newFormatMatch[2];
+      type = newFormatMatch[3];
+      verseNum = parseInt(newFormatMatch[4], 10);
     } else if (id.startsWith("verse-")) {
       type = "verse";
       const parts = id.replace("verse-", "").split("-");
@@ -87,20 +90,23 @@ export default function FavoritesPage() {
       return null;
     }
 
-    const chapterData = isaiahChapters[chapterNum];
+    const book = bibleBooks[bookId];
+    if (!book) return null;
+
+    const chapterData = book.chapters[chapterNum];
     if (!chapterData) return null;
 
     const slideIndex = getSlideIndex(chapterData, id);
     const linkHref =
       slideIndex >= 0
-        ? `book/isaiah/${chapterNum}?slide=${slideIndex}`
-        : `book/isaiah/${chapterNum}`;
+        ? `/book/${bookId}/${chapterNum}?slide=${slideIndex}`
+        : `/book/${bookId}/${chapterNum}`;
 
     if (type === "verse") {
       const verse = chapterData.verses.find((v) => v.verse === verseNum);
       return verse
         ? {
-            title: `Isaiah ${chapterNum}:${verse.verse}`,
+            title: `${book.title} ${chapterNum}:${verse.verse}`,
             text: verse.text,
             isVisual: false,
             linkHref,
@@ -180,7 +186,7 @@ export default function FavoritesPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setItemToDelete(id); // Set the specific item to trigger the modal
+                        setItemToDelete(id);
                       }}
                       className="text-stone-300 hover:text-red-500 transition-colors p-2 -mr-2"
                     >
