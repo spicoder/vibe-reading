@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#FDFBF7] pb-24">
       <header className="px-6 pt-12 pb-6 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-50">
-        <h1 className="text-2xl font-black font-serif text-stone-900 tracking-tight">
-          LIBRARY
+        <h1 className="uppercase text-2xl font-black font-serif text-stone-900 tracking-tight">
+          Vibe Reading
         </h1>
         <div className="flex gap-4">
           <Link

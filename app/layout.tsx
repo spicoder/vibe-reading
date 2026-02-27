@@ -18,7 +18,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Book of Isaiah",
+  title: "Vibe Reading",
   description: "Bible Stories",
 };
 
