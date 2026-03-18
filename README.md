@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Project Specification: Interactive Bible Reading App
 
-## Getting Started
+## Overview
 
-First, run the development server:
+A Next.js web application designed to read and interact with Bible text (specifically the Book of Isaiah). The app features a conversational/story-based UI, speaker-specific color coding, and the ability to save favorites and "spiritual gems."
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech Stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Framework:** Next.js (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **State Management:** React Hooks (Local Storage for favorites/gems)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Core Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Story Viewer UI:** Displays verses similarly to a modern chat or script interface, rather than a traditional wall of text.
+2. **Dynamic Theming by Speaker:** Verses change color/style depending on who is speaking (e.g., God, Isaiah, Narrator).
+3. **Favorites System:** Users can save specific verses to a favorites list.
+4. **Spiritual Gems:** A dedicated section to save and reflect on meaningful quotes or passages.
 
-## Learn More
+## Project Structure & File Requirements
 
-To learn more about Next.js, take a look at the following resources:
+### 1. Routing (`/app`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/` (`page.tsx`): Home/Landing page.
+- `/book/[bookId]` (`page.tsx`): Displays chapters for a specific book.
+- `/book/[bookId]/[chapterId]` (`page.tsx`): The main reading view displaying verses for a specific chapter.
+- `/favorites` (`page.tsx`): Displays the user's saved favorite verses.
+- `/spiritual-gems` (`page.tsx`): Displays saved highlights/notes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. Components (`/app/components`)
 
-## Deploy on Vercel
+- `StoryViewer.tsx`: The primary UI component. Takes chapter data and renders the verses, applying themes based on the speaker, and handles the "favorite" button interactions.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. Data & Types
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/app/types.tsx`: Define interfaces for `Verse`, `Chapter`, `Book`, and `SpeakerTheme`.
+- `/app/bookData/bookOfIsaiah.tsx`: Contains the static JSON/Object data structure for the Book of Isaiah (verses, speakers, chapter numbers).
+
+### 4. Libraries & Utilities (`/app/lib`)
+
+- `data.tsx`: Helper functions to fetch/filter book and chapter data.
+- `hooks.tsx`: Custom React hooks (e.g., `useLocalStorage`) to manage saved favorites and spiritual gems across the app.
+- `speakerThemes.tsx`: Maps speaker names (e.g., "Jehovah", "Isaiah") to specific Tailwind CSS color classes.
