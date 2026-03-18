@@ -11,6 +11,8 @@ import {
   Bookmark,
   Star,
   Lock,
+  MessageCircle, // <-- NEW
+  X, // <-- NEW
 } from "lucide-react";
 import { bibleBooks } from "@/app/lib/data";
 import { useMultiplayer, PlayerProfile } from "@/app/lib/MultiplayerContext";
@@ -69,6 +71,11 @@ export default function BookPage() {
   const book = bibleBooks[bookId];
 
   const [mounted, setMounted] = useState(false);
+  const [viewingGems, setViewingGems] = useState<{
+    chapter: string;
+    gems: { player: PlayerProfile; ref: string; content: string }[];
+  } | null>(null);
+
   useEffect(() => setMounted(true), []);
 
   if (!book) notFound();
@@ -248,6 +255,28 @@ export default function BookPage() {
               },
             );
 
+            // --- NEW: Calculate community gems for this specific chapter ---
+            const chapterPrefix = `${book.title} ${pos.id}:`; // e.g., "Isaiah 1:"
+            const communityGems: {
+              player: PlayerProfile;
+              ref: string;
+              content: string;
+            }[] = [];
+
+            (allPlayers as PlayerProfile[]).forEach((player) => {
+              if (!player.gems) return;
+              Object.entries(player.gems).forEach(([ref, content]) => {
+                if (ref.startsWith(chapterPrefix)) {
+                  // 2. Add 'as string' to content here:
+                  communityGems.push({
+                    player,
+                    ref,
+                    content: content as string,
+                  });
+                }
+              });
+            });
+            // ----------------------------------------------------------------
             return (
               <div
                 key={pos.id}
@@ -303,6 +332,28 @@ export default function BookPage() {
                     </div>
                   )}
 
+                  {/* --- NEW: COMMUNITY GEMS BUTTON --- */}
+                  {communityGems.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault(); // Stop link navigation
+                        e.stopPropagation();
+                        setViewingGems({
+                          chapter: pos.id,
+                          gems: communityGems,
+                        });
+                      }}
+                      className="absolute -bottom-2 -left-2 w-8 h-8 bg-amber-50 border-2 border-white rounded-full flex items-center justify-center text-amber-500 shadow-md hover:scale-110 hover:bg-amber-100 transition-all z-40"
+                      title={`View ${communityGems.length} community gems`}
+                    >
+                      <MessageCircle size={14} className="fill-amber-200" />
+                      <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                        {communityGems.length}
+                      </span>
+                    </button>
+                  )}
+                  {/* ---------------------------------- */}
+
                   {/* Signpost (Thumbnail and Title) */}
                   <div
                     className={`
@@ -354,6 +405,63 @@ export default function BookPage() {
           })}
         </div>
       </section>
+
+      {/* --- NEW: COMMUNITY GEMS MODAL --- */}
+      {viewingGems && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#FDFBF7] rounded-3xl p-6 max-w-md w-full max-h-[80vh] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-stone-200">
+              <div>
+                <h3 className="text-xl font-bold font-serif text-stone-900">
+                  Community Gems
+                </h3>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mt-1">
+                  {book.title} Chapter {viewingGems.chapter}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingGems(null)}
+                className="p-2 bg-white border border-stone-200 text-stone-400 hover:bg-stone-50 hover:text-stone-700 rounded-full transition-colors shadow-sm"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content / Comments */}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-2">
+              {viewingGems.gems.map((gem, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm relative"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-full bg-white border-2 border-stone-100 flex items-center justify-center text-sm shadow-sm shrink-0">
+                      {gem.player.avatar}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-stone-900 leading-none">
+                        {gem.player.name}
+                      </p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mt-1">
+                        {gem.ref}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-stone-700 font-serif leading-relaxed text-sm bg-stone-50 p-3.5 rounded-xl border border-stone-100 whitespace-pre-wrap">
+                    {gem.content || (
+                      <span className="italic text-stone-400">
+                        Empty note...
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --------------------------------- */}
     </main>
   );
 }
