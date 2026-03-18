@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useGems } from "@/app/lib/hooks";
+import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
 
@@ -136,7 +136,7 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
   const searchParams = useSearchParams();
   const returnTo = searchParams.get("returnTo");
 
-  const { getGem, saveGem, isLoaded } = useGems();
+  const { getGem, saveGem, isLoaded } = useMultiplayer();
   const [note, setNote] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -243,7 +243,7 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
 }
 
 function GemsList() {
-  const { allGems, deleteGem, isLoaded } = useGems();
+  const { allGems, deleteGem, isLoaded } = useMultiplayer();
   const [searchTerm, setSearchTerm] = useState("");
   const [gemToDelete, setGemToDelete] = useState<string | null>(null);
 

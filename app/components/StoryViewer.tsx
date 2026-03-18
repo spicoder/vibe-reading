@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { X, Map, Heart, MessageCircle, LayoutGrid } from "lucide-react"; // Added LayoutGrid
+import { X, Map, Heart, MessageCircle, LayoutGrid } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChapterData,
@@ -12,7 +12,8 @@ import {
   SpeakerTheme,
 } from "@/app/types";
 import { speakerThemes } from "../lib/speakerThemes";
-import { useFavorites, useProgress } from "@/app/lib/hooks";
+// 1. UPDATED IMPORT: Swapped useProgress for useMultiplayer
+import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -30,7 +31,6 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   let currentGroup: Verse[] = [];
   const addedVisuals = new Set<number>();
 
-  // Extract the chapter number to use in our unique IDs
   const chapterNumber = chapter.chapter;
 
   const flushGroup = () => {
@@ -39,13 +39,11 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
     const firstVerse = currentGroup[0];
     const lastVerse = currentGroup[currentGroup.length - 1];
 
-    // Find the current segment based on the first verse of the thought
     const segmentIndex = sortedVisuals.findLastIndex(
       (v) => v.startVerse <= firstVerse.verse,
     );
     const visual = sortedVisuals[segmentIndex];
 
-    // Add visual if it exactly matches the start of this verse group AND hasn't been added yet
     if (
       visual &&
       firstVerse.verse === visual.startVerse &&
@@ -54,24 +52,20 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
       items.push({
         type: "visual",
         data: visual,
-        // Include chapter number in the visual ID
         id: `chapter-${chapterNumber}-visual-${firstVerse.verse}`,
         segmentIndex: Math.max(0, segmentIndex),
       });
       addedVisuals.add(visual.startVerse);
     }
 
-    // Format display string
     const isGrouped = currentGroup.length > 1;
     const verseDisplay = isGrouped
       ? `${firstVerse.verse}-${lastVerse.verse}`
       : `${firstVerse.verse}`;
 
-    // Combine texts
     const combinedText = currentGroup.map((v) => v.text).join(" ");
     const speaker = firstVerse.speaker;
 
-    // Include chapter number in the verse ID to make it globally unique across all chapters
     const uniqueVerseId = `chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
 
     items.push({
@@ -82,7 +76,7 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
         text: combinedText,
         verseDisplay,
       },
-      id: uniqueVerseId, // Use the globally unique ID here
+      id: uniqueVerseId,
       segmentIndex: Math.max(0, segmentIndex),
     });
 
@@ -126,12 +120,14 @@ function StoryViewerContent({
   const [currentIndex, setCurrentIndex] = useState(initialSlide);
   const [direction, setDirection] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [showGrid, setShowGrid] = useState(false); // New state for grid view
+  const [showGrid, setShowGrid] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const router = useRouter();
-  const { isFavorite, toggleFavorite } = useFavorites();
-  const { markAsCompleted } = useProgress();
+  const { isFavorite, toggleFavorite } = useMultiplayer();
+
+  // 2. UPDATED HOOK: Using the Firebase multiplayer hook
+  const { markAsCompleted } = useMultiplayer();
 
   const currentSlide = slides[currentIndex];
   const isLastSlide = currentIndex === slides.length - 1;
@@ -161,7 +157,6 @@ function StoryViewerContent({
 
   // --- Timer / Progress Logic ---
   useEffect(() => {
-    // Pause the timer if grid is shown
     if (isPaused || isLastSlide || showGrid) return;
 
     const SLIDE_DURATION = 15000;
@@ -181,15 +176,17 @@ function StoryViewerContent({
     return () => clearInterval(timer);
   }, [isPaused, handleNext, isLastSlide, showGrid]);
 
+  // 3. UPDATED EFFECT: Triggers Firebase when you reach the last slide
   useEffect(() => {
     if (isLastSlide) {
       markAsCompleted(`${bookId}-${currentChapter}`);
     }
   }, [isLastSlide, currentChapter, bookId, markAsCompleted]);
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showGrid) return; // Disable keyboard navigation while grid is open
+      if (showGrid) return;
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === " ") setIsPaused((p) => !p);

@@ -1,39 +1,24 @@
 import type { Metadata } from "next";
-// 1. Import the fonts from Google
-import { Fraunces, Nunito } from "next/font/google";
 import "./globals.css";
 
-// 2. Configure the fonts
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  // We define a variable name to use in Tailwind
-  variable: "--font-fraunces",
-  display: "swap",
-});
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  variable: "--font-nunito",
-  display: "swap",
-});
+// 1. Import the new Provider
+import { MultiplayerProvider } from "@/app/lib/MultiplayerContext";
 
 export const metadata: Metadata = {
   title: "Vibe Reading",
-  description: "Bible Stories",
+  description: "Bible Vibe Reading",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      {/* 3. Add the variables to the body class */}
-      <body
-        className={`${fraunces.variable} ${nunito.variable} font-sans bg-[#FDFBF7]`}
-      >
-        {children}
+      <body className={`antialiased bg-[#FDFBF7]`}>
+        {/* 2. Wrap the children with the Provider */}
+        <MultiplayerProvider>{children}</MultiplayerProvider>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, Heart, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useFavorites } from "@/app/lib/hooks";
+import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
 
@@ -60,7 +60,7 @@ const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
 };
 
 export default function FavoritesPage() {
-  const { favorites, toggleFavorite, isLoaded } = useFavorites();
+  const { favorites, toggleFavorite, isLoaded } = useMultiplayer();
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const getVerseContent = (id: string) => {
