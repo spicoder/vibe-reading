@@ -13,7 +13,7 @@ import {
   Lock,
 } from "lucide-react";
 import { bibleBooks } from "@/app/lib/data";
-import { useMultiplayer } from "@/app/lib/MultiplayerContext";
+import { useMultiplayer, PlayerProfile } from "@/app/lib/MultiplayerContext";
 import { useEffect, useState } from "react";
 
 // Helper to generate a unique but consistent theme for each book
@@ -233,18 +233,20 @@ export default function BookPage() {
             const isRightSide = pos.x > 200;
 
             // MULTIPLAYER LOGIC: Find other players currently on this exact chapter
-            const playersOnThisNode = allPlayers.filter((player) => {
-              if (player.id === currentUser?.id) return false; // Don't show current user in the tiny bubbles
+            const playersOnThisNode = (allPlayers as PlayerProfile[]).filter(
+              (player) => {
+                if (player.id === currentUser?.id) return false; // Don't show current user in the tiny bubbles
 
-              // Figure out this player's next chapter for this specific book
-              const playerNextChapter =
-                chapters.find(
-                  ([id]) =>
-                    !player.completedChapters.includes(`${bookId}-${id}`),
-                )?.[0] || "1";
+                // Figure out this player's next chapter for this specific book
+                const playerNextChapter =
+                  chapters.find(
+                    ([id]) =>
+                      !player.completedChapters.includes(`${bookId}-${id}`),
+                  )?.[0] || "1";
 
-              return playerNextChapter === pos.id;
-            });
+                return playerNextChapter === pos.id;
+              },
+            );
 
             return (
               <div

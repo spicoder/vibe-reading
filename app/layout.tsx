@@ -16,7 +16,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased bg-[#FDFBF7]`}>
+      <body className={`antialiased bg-[#FDFBF7]`} suppressHydrationWarning>
+        {" "}
         {/* 2. Wrap the children with the Provider */}
         <MultiplayerProvider>{children}</MultiplayerProvider>
       </body>

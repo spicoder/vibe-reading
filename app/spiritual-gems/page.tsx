@@ -243,7 +243,8 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
 }
 
 function GemsList() {
-  const { allGems, deleteGem, isLoaded } = useMultiplayer();
+  const router = useRouter();
+  const { currentUser, deleteGem, isLoaded } = useMultiplayer();
   const [searchTerm, setSearchTerm] = useState("");
   const [gemToDelete, setGemToDelete] = useState<string | null>(null);
 
@@ -252,10 +253,9 @@ function GemsList() {
       <div className="p-10 text-center text-stone-400">Loading gems...</div>
     );
 
-  const gemsArray = Object.entries(allGems).map(([ref, content]) => ({
-    ref,
-    content,
-  }));
+  const gemsArray = Object.entries(currentUser?.gems || {}).map(
+    ([ref, content]) => ({ ref, content: String(content) }),
+  );
   const filteredGems = gemsArray.filter(
     (g) =>
       g.ref.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -266,12 +266,12 @@ function GemsList() {
     <div className="flex flex-col min-h-screen bg-[#FDFBF7] relative">
       <header className="p-6 sticky top-0 z-10 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-stone-100">
         <div className="flex items-center gap-4 mb-6">
-          <Link
-            href="/"
+          <button
+            onClick={() => router.back()}
             className="p-2 bg-white border border-stone-200 rounded-full text-stone-600 hover:bg-stone-100 transition-colors shadow-sm"
           >
             <ArrowLeft size={24} />
-          </Link>
+          </button>
           <div>
             <h1 className="font-serif text-2xl font-bold text-stone-900">
               Spiritual Gems

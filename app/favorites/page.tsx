@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
+import { useRouter } from "next/navigation";
 
 const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
   const items: { id: string }[] = [];
@@ -60,7 +61,9 @@ const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
 };
 
 export default function FavoritesPage() {
-  const { favorites, toggleFavorite, isLoaded } = useMultiplayer();
+  const router = useRouter();
+  const { currentUser, toggleFavorite, isLoaded } = useMultiplayer();
+  const favorites = currentUser?.favorites || [];
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const getVerseContent = (id: string) => {
@@ -140,12 +143,12 @@ export default function FavoritesPage() {
     <main className="min-h-screen bg-[#FDFBF7] p-6 relative">
       <header className="flex items-center justify-between mb-8 sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-sm z-10 py-4">
         <div className="flex items-center gap-4">
-          <Link
-            href="/"
+          <button
+            onClick={() => router.back()}
             className="p-2 bg-white border border-stone-200 rounded-full text-stone-600 hover:bg-stone-100 transition-colors shadow-sm"
           >
             <ArrowLeft size={24} />
-          </Link>
+          </button>
           <h1 className="font-serif text-2xl font-bold text-stone-900">
             Favorites
           </h1>
@@ -166,7 +169,7 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="grid gap-4 max-w-2xl mx-auto pb-20">
-          {favorites.map((id) => {
+          {favorites.map((id: string) => {
             const content = getVerseContent(id);
             if (!content) return null;
 
