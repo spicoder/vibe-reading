@@ -1,5 +1,6 @@
 "use client";
 
+import confetti from "canvas-confetti";
 import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { X, Map, Heart, MessageCircle, LayoutGrid } from "lucide-react";
@@ -137,6 +138,19 @@ function StoryViewerContent({
     (s) => s.segmentIndex === currentSegmentIndex,
   );
   const indexInSegment = segmentSlides.indexOf(currentSlide);
+
+  useEffect(() => {
+    if (isLastSlide) {
+      markAsCompleted(`${bookId}-${currentChapter}`);
+      // Fire confetti
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#F59E0B", "#FDE68A", "#FFFFFF"],
+      });
+    }
+  }, [isLastSlide, currentChapter, bookId, markAsCompleted]);
 
   // --- Navigation Logic ---
   const handleNext = useCallback(() => {
@@ -542,7 +556,7 @@ function StoryViewerContent({
         <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-2xl z-50">
           <div className="text-center p-8">
             <h2 className="text-4xl font-serif font-bold mb-2">
-              Chapter Complete
+              Chapter Complete! 🎉
             </h2>
             <p className="text-stone-400 mb-8 max-w-xs mx-auto">
               You've finished reading Chapter {currentChapter}.
@@ -557,10 +571,10 @@ function StoryViewerContent({
                 </Link>
               )}
               <Link
-                href={bookUrl}
+                href="/"
                 className="bg-white/10 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest"
               >
-                Library
+                Return to Library
               </Link>
             </div>
           </div>

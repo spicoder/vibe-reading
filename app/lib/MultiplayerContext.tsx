@@ -32,6 +32,22 @@ export const MultiplayerProvider = ({
   const [allPlayers, setAllPlayers] = useState<PlayerProfile[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Auto-login from cache
+  useEffect(() => {
+    const cachedUser = localStorage.getItem("viber_reader");
+    if (cachedUser) {
+      // Temporarily set a shell user so the UI doesn't flash the login screen
+      setCurrentUser({
+        id: cachedUser,
+        name: "Loading...",
+        avatar: "⏳",
+        completedChapters: [],
+        favorites: [],
+        gems: {},
+      });
+    }
+  }, []);
+
   // 1. Listen for ALL players on the map
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
@@ -43,6 +59,11 @@ export const MultiplayerProvider = ({
       setCurrentUser((prev) => {
         if (!prev) return null;
         const updatedMe = players.find((p) => p.id === prev.id);
+
+        // If we found the real user data after auto-login, update it
+        if (updatedMe && prev.avatar === "⏳") {
+          return updatedMe;
+        }
         return updatedMe || prev;
       });
       setIsLoaded(true);
@@ -66,7 +87,6 @@ export const MultiplayerProvider = ({
     if (userSnap.exists())
       throw new Error("This username is already taken. Try another!");
 
-    // Initialize with empty arrays/objects for the new fields
     const newUser: PlayerProfile = {
       id: normalizedId,
       name,
@@ -77,6 +97,7 @@ export const MultiplayerProvider = ({
     };
 
     await setDoc(userRef, newUser);
+    localStorage.setItem("viber_reader", normalizedId); // Cache login
     setCurrentUser(newUser);
   };
 
@@ -86,16 +107,20 @@ export const MultiplayerProvider = ({
     const userRef = doc(db, "users", normalizedId);
     const userSnap = await getDoc(userRef);
 
-    if (!userSnap.exists())
+    if (!userSnap.exists()) {
+      localStorage.removeItem("viber_reader");
       throw new Error(
         "Account not found. Check the spelling or create a new one.",
       );
+    }
 
+    localStorage.setItem("viber_reader", normalizedId); // Cache login
     setCurrentUser({ id: userSnap.id, ...userSnap.data() } as PlayerProfile);
   };
 
   // 4. Log Out
   const logoutUser = () => {
+    localStorage.removeItem("viber_reader"); // Clear cache
     setCurrentUser(null);
   };
 
