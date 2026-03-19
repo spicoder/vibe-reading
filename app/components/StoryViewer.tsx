@@ -109,7 +109,7 @@ function StoryViewerContent({
   bookId,
   bookTitle,
   chapter,
-  nextChapterUrl,
+  nextChapterId,
   bookUrl,
 }: StoryViewerProps) {
   const currentChapter = chapter.chapter;
@@ -281,7 +281,8 @@ function StoryViewerContent({
         isLastSlide={isLastSlide}
         showGrid={showGrid}
         currentChapter={currentChapter}
-        nextChapterUrl={nextChapterUrl}
+        bookId={bookId} // <-- Passed down
+        nextChapterId={nextChapterId}
       />
     </div>
   );

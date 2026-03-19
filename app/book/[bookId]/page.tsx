@@ -1,7 +1,12 @@
 "use client";
 
-import { notFound, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  notFound,
+  useParams,
+  useSearchParams,
+  useRouter,
+} from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Map, Heart, Bookmark } from "lucide-react";
 import { bibleBooks } from "@/app/lib/data";
@@ -31,10 +36,16 @@ const getBookBgColor = (bookId: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-export default function BookPage() {
+function BookPageContent() {
   const params = useParams();
   const bookId = params.bookId as string;
   const book = bibleBooks[bookId];
+
+  // 1. Hook into URL parameters for animation triggers
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const animateTo = searchParams.get("animateTo");
+  const animateFrom = searchParams.get("animateFrom");
 
   const [mounted, setMounted] = useState(false);
   const [viewingGems, setViewingGems] = useState<{
@@ -42,7 +53,22 @@ export default function BookPage() {
     gems: { player: PlayerProfile; ref: string; content: string }[];
   } | null>(null);
 
+  // 2. State for the Start Reading Modal
+  const [startModalChapter, setStartModalChapter] = useState<string | null>(
+    null,
+  );
+
   useEffect(() => setMounted(true), []);
+
+  // 3. Trigger Modal After Map Animation (2200ms delay)
+  useEffect(() => {
+    if (animateTo) {
+      const timer = setTimeout(() => {
+        setStartModalChapter(animateTo);
+      }, 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [animateTo]);
 
   if (!book) notFound();
 
@@ -79,6 +105,9 @@ export default function BookPage() {
           isLoaded={isLoaded}
           mounted={mounted}
           onViewGems={setViewingGems}
+          // 4. Pass the animation props to GamifiedMap
+          animateTo={animateTo}
+          animateFrom={animateFrom}
         />
       </div>
 
@@ -134,6 +163,51 @@ export default function BookPage() {
           onClose={() => setViewingGems(null)}
         />
       )}
+
+      {/* 5. Start Reading Modal */}
+      {startModalChapter && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm px-4 transition-opacity">
+          <div className="bg-white text-black p-8 rounded-[2rem] max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+              📖
+            </div>
+            <h3 className="text-2xl font-serif font-bold mb-2 text-stone-900">
+              Chapter {startModalChapter} Unlocked!
+            </h3>
+            <p className="text-stone-500 mb-8 leading-relaxed">
+              Your journey continues. Are you ready to dive into the next
+              chapter?
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href={`/book/${bookId}/${startModalChapter}`}
+                className="bg-amber-500 text-black px-6 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/30"
+              >
+                Start Reading
+              </Link>
+              <button
+                onClick={() => {
+                  setStartModalChapter(null);
+                  // Clean up the URL so it doesn't trigger again on refresh
+                  router.replace(`/book/${bookId}`);
+                }}
+                className="text-stone-400 font-bold uppercase text-xs tracking-widest py-3 hover:text-stone-600 transition-colors"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+// 6. Wrap in Suspense to safely use searchParams
+export default function BookPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7]" />}>
+      <BookPageContent />
+    </Suspense>
   );
 }

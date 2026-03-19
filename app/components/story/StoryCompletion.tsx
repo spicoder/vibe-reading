@@ -4,14 +4,16 @@ interface StoryCompletionProps {
   isLastSlide: boolean;
   showGrid: boolean;
   currentChapter: number;
-  nextChapterUrl?: string | null; // <-- Updated to allow null
+  bookId: string;
+  nextChapterId?: string | null;
 }
 
 export function StoryCompletion({
   isLastSlide,
   showGrid,
   currentChapter,
-  nextChapterUrl,
+  bookId,
+  nextChapterId,
 }: StoryCompletionProps) {
   if (!isLastSlide || showGrid) return null;
 
@@ -25,19 +27,19 @@ export function StoryCompletion({
           You've finished reading Chapter {currentChapter}.
         </p>
         <div className="flex flex-col gap-4 items-center">
-          {nextChapterUrl && (
+          {nextChapterId && (
             <Link
-              href={nextChapterUrl}
-              className="bg-amber-500 text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest"
+              href={`/book/${bookId}?animateTo=${nextChapterId}&animateFrom=${currentChapter}`}
+              className="bg-amber-500 text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-amber-400 transition"
             >
               Next Chapter
             </Link>
           )}
           <Link
-            href="/"
-            className="bg-white/10 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest"
+            href={`/book/${bookId}`}
+            className="bg-white/10 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-white/20 transition"
           >
-            Return to Library
+            Return to Map
           </Link>
         </div>
       </div>

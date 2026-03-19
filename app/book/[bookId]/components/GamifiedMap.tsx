@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MessageCircle, Trophy, Crown } from "lucide-react";
+import { MessageCircle, Trophy, Crown, Star } from "lucide-react";
 import { PlayerProfile } from "@/app/lib/MultiplayerContext";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 
 interface GamifiedMapProps {
   book: any;
@@ -16,6 +16,8 @@ interface GamifiedMapProps {
   isLoaded: boolean;
   mounted: boolean;
   onViewGems: (gemsData: { chapter: string; gems: any[] }) => void;
+  animateTo?: string | null;
+  animateFrom?: string | null;
 }
 
 export default function GamifiedMap({
@@ -30,6 +32,8 @@ export default function GamifiedMap({
   isLoaded,
   mounted,
   onViewGems,
+  animateTo,
+  animateFrom,
 }: GamifiedMapProps) {
   const activeNodeRef = useRef<HTMLDivElement>(null);
 
@@ -38,11 +42,13 @@ export default function GamifiedMap({
   const containerHeight = chapters.length * NODE_SPACING + 250;
 
   // Invert the Y-axis so Chapter 1 starts at the bottom and goes "uphill"
-  const nodePositions = chapters.map(([id, chapter], i) => {
-    const x = 200 + Math.sin(i * 0.8) * 110;
-    const y = containerHeight - (i * NODE_SPACING + 150);
-    return { id, chapter, x, y, i };
-  });
+  const nodePositions = useMemo(() => {
+    return chapters.map(([id, chapter], i) => {
+      const x = 200 + Math.sin(i * 0.8) * 110;
+      const y = containerHeight - (i * NODE_SPACING + 150);
+      return { id, chapter, x, y, i };
+    });
+  }, [chapters, containerHeight]);
 
   const treasureX = 200;
   const treasureY =
@@ -50,6 +56,40 @@ export default function GamifiedMap({
       ? nodePositions[nodePositions.length - 1].y - 130
       : 100;
 
+  const [avatarPos, setAvatarPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+
+  // Handle avatar movement animation
+  useEffect(() => {
+    if (!mounted || !isLoaded) return;
+
+    if (animateFrom && animateTo) {
+      const fromNode = nodePositions.find((n) => n.id === animateFrom);
+      const toNode = nodePositions.find((n) => n.id === animateTo);
+
+      if (fromNode && toNode) {
+        // 1. Instantly snap to the start position
+        setAvatarPos({ x: fromNode.x, y: fromNode.y });
+
+        // 2. Wait 800ms for the map's fade-in transition to mostly finish, THEN move
+        const timer = setTimeout(() => {
+          setAvatarPos({ x: toNode.x, y: toNode.y });
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      // No animation, snap directly to active next chapter node
+      const activeNode = nodePositions.find((n) => n.id === nextChapterId);
+      if (activeNode) {
+        setAvatarPos((prev) =>
+          prev?.x === activeNode.x && prev?.y === activeNode.y
+            ? prev
+            : { x: activeNode.x, y: activeNode.y },
+        );
+      }
+    }
+  }, [animateFrom, animateTo, nextChapterId, mounted, isLoaded, nodePositions]);
   let pathD = "";
   if (nodePositions.length > 0) {
     pathD = `M ${nodePositions[0].x} ${nodePositions[0].y}`;
@@ -213,12 +253,45 @@ export default function GamifiedMap({
           </div>
         )}
 
+        {/* 1. Animated Floating Avatar */}
+        {avatarPos && (
+          <div
+            className="absolute z-50 pointer-events-none"
+            style={{
+              left: `${(avatarPos.x / MAP_WIDTH) * 100}%`,
+              top: avatarPos.y,
+              transform: "translate(-50%, -120%)",
+              // Added inline transition to guarantee it fires smoothly
+              transition: "left 1.2s ease-in-out, top 1.2s ease-in-out",
+            }}
+          >
+            <div className="text-4xl drop-shadow-2xl animate-[bounce_2s_infinite]">
+              {currentUser?.avatar || "👤"}
+            </div>
+          </div>
+        )}
+
         {/* Chapter Nodes */}
         {nodePositions.map((pos) => {
           const isDone = completedChapters.includes(`${bookId}-${pos.id}`);
           const isActive = !isDone && pos.id === nextChapterId;
           const thumbnail = pos.chapter.visuals[0]?.imageSrc;
           const isRightSide = pos.x > 200;
+
+          // Compute Stars Based on Activity
+          let userStarsCount = 1; // Base 1 star for reading
+          if (isDone) {
+            const chapterPrefix = `${book.title} ${pos.id}:`;
+            const hasGems = Object.keys(currentUser?.gems || {}).some((ref) =>
+              ref.startsWith(chapterPrefix),
+            );
+            const hasFavs = currentUser?.favorites?.some((fav) =>
+              fav.startsWith(`chapter-${pos.id}-`),
+            );
+
+            if (hasGems) userStarsCount = 3;
+            else if (hasFavs) userStarsCount = 2;
+          }
 
           const playersOnThisNode = allPlayers.filter((player) => {
             if (player.id === currentUser?.id) return false;
@@ -255,21 +328,31 @@ export default function GamifiedMap({
                   className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 relative font-black text-2xl
                   ${
                     isActive
-                      ? `bg-green-400 border-[3px] border-white shadow-[0_6px_0_#16a34a,0_10px_15px_rgba(0,0,0,0.2)] scale-[1.15] z-20 text-white animate-[bounce_2s_infinite]`
+                      ? `bg-green-400 border-[3px] border-white shadow-[0_6px_0_#16a34a,0_10px_15px_rgba(0,0,0,0.2)] scale-[1.15] z-20 text-white`
                       : isDone
                         ? `bg-amber-400 border-[3px] border-white shadow-[0_6px_0_#d97706,0_8px_10px_rgba(0,0,0,0.15)] text-white hover:shadow-[0_3px_0_#d97706,0_5px_10px_rgba(0,0,0,0.15)] z-10`
                         : `bg-stone-200 border-[3px] border-white text-stone-400 scale-90 shadow-[0_4px_0_#a8a29e,0_5px_10px_rgba(0,0,0,0.1)] z-0`
                   }`}
                 >
                   <div className="transform -translate-y-0.5">{pos.id}</div>
-
-                  {/* Only show avatar badge for the active state to reduce noise */}
-                  {isActive && (
-                    <div className="absolute -top-3 -right-3 text-2xl drop-shadow-sm z-30">
-                      {currentUser?.avatar || "👤"}
-                    </div>
-                  )}
                 </div>
+
+                {/* Added Star System Badge for completed chapters */}
+                {isDone && (
+                  <div className="absolute -bottom-3 bg-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-0.5 z-40 border border-stone-200/50">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={12}
+                        className={
+                          i < userStarsCount
+                            ? "fill-amber-400 text-amber-500 drop-shadow-sm"
+                            : "fill-stone-200 text-stone-300"
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
 
                 {/* Multiplayer Avatars */}
                 {playersOnThisNode.length > 0 && (

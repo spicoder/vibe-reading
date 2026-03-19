@@ -54,6 +54,6 @@ export interface StoryViewerProps {
   bookId: string;
   bookTitle: string;
   chapter: ChapterData;
-  nextChapterUrl: string | null;
+  nextChapterId: string | null;
   bookUrl: string;
 }

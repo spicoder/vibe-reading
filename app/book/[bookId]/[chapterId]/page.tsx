@@ -35,9 +35,6 @@ export default async function ChapterPage({
   const currentIndex = chapterIds.indexOf(chapterId);
   const nextChapterId = chapterIds[currentIndex + 1] || null;
 
-  const nextChapterUrl = nextChapterId
-    ? `/book/${bookId}/${nextChapterId}`
-    : null;
   const bookUrl = `/book/${bookId}`;
 
   return (
@@ -45,7 +42,7 @@ export default async function ChapterPage({
       bookId={book.id}
       bookTitle={book.title}
       chapter={chapter}
-      nextChapterUrl={nextChapterUrl}
+      nextChapterId={nextChapterId}
       bookUrl={bookUrl}
     />
   );
