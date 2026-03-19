@@ -62,7 +62,7 @@ function BookPageContent() {
 
   // 3. Trigger Modal After Map Animation (2200ms delay)
   useEffect(() => {
-    if (animateTo) {
+    if (animateTo && animateTo !== "treasure") {
       const timer = setTimeout(() => {
         setStartModalChapter(animateTo);
       }, 2200);
@@ -78,10 +78,15 @@ function BookPageContent() {
   const theme = getBookTheme(bookId);
   const bgColor = getBookBgColor(bookId);
 
+  const isBookCompleted =
+    isLoaded &&
+    chapters.length > 0 &&
+    chapters.every(([id]) => completedChapters.includes(`${bookId}-${id}`));
+
   const nextChapterId =
     chapters.find(
       ([id]) => !completedChapters.includes(`${bookId}-${id}`),
-    )?.[0] || "1";
+    )?.[0] || chapters[0][0];
 
   const nextChapter = book.chapters[nextChapterId];
   const isChapterDone =
@@ -108,6 +113,7 @@ function BookPageContent() {
           // 4. Pass the animation props to GamifiedMap
           animateTo={animateTo}
           animateFrom={animateFrom}
+          isBookCompleted={isBookCompleted}
         />
       </div>
 
@@ -121,6 +127,7 @@ function BookPageContent() {
             nextChapter={nextChapter}
             isChapterDone={isChapterDone}
             theme={theme}
+            isBookCompleted={isBookCompleted}
           />
         </div>
 

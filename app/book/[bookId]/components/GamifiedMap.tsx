@@ -18,6 +18,7 @@ interface GamifiedMapProps {
   onViewGems: (gemsData: { chapter: string; gems: any[] }) => void;
   animateTo?: string | null;
   animateFrom?: string | null;
+  isBookCompleted?: boolean;
 }
 
 export default function GamifiedMap({
@@ -34,6 +35,7 @@ export default function GamifiedMap({
   onViewGems,
   animateTo,
   animateFrom,
+  isBookCompleted,
 }: GamifiedMapProps) {
   const activeNodeRef = useRef<HTMLDivElement>(null);
 
@@ -66,30 +68,58 @@ export default function GamifiedMap({
 
     if (animateFrom && animateTo) {
       const fromNode = nodePositions.find((n) => n.id === animateFrom);
-      const toNode = nodePositions.find((n) => n.id === animateTo);
 
-      if (fromNode && toNode) {
-        // 1. Instantly snap to the start position
-        setAvatarPos({ x: fromNode.x, y: fromNode.y });
+      if (animateTo === "treasure") {
+        if (fromNode) {
+          setAvatarPos({ x: fromNode.x, y: fromNode.y });
+          const timer = setTimeout(() => {
+            setAvatarPos({ x: treasureX, y: treasureY });
+          }, 800);
+          return () => clearTimeout(timer);
+        } else {
+          setAvatarPos({ x: treasureX, y: treasureY });
+        }
+      } else {
+        const toNode = nodePositions.find((n) => n.id === animateTo);
 
-        // 2. Wait 800ms for the map's fade-in transition to mostly finish, THEN move
-        const timer = setTimeout(() => {
-          setAvatarPos({ x: toNode.x, y: toNode.y });
-        }, 800);
-        return () => clearTimeout(timer);
+        if (fromNode && toNode) {
+          // 1. Instantly snap to the start position
+          setAvatarPos({ x: fromNode.x, y: fromNode.y });
+
+          // 2. Wait 800ms for the map's fade-in transition to mostly finish, THEN move
+          const timer = setTimeout(() => {
+            setAvatarPos({ x: toNode.x, y: toNode.y });
+          }, 800);
+          return () => clearTimeout(timer);
+        }
       }
     } else {
       // No animation, snap directly to active next chapter node
-      const activeNode = nodePositions.find((n) => n.id === nextChapterId);
-      if (activeNode) {
-        setAvatarPos((prev) =>
-          prev?.x === activeNode.x && prev?.y === activeNode.y
-            ? prev
-            : { x: activeNode.x, y: activeNode.y },
-        );
+      if (isBookCompleted) {
+        setAvatarPos({ x: treasureX, y: treasureY });
+      } else {
+        const activeNode = nodePositions.find((n) => n.id === nextChapterId);
+        if (activeNode) {
+          setAvatarPos((prev) =>
+            prev?.x === activeNode.x && prev?.y === activeNode.y
+              ? prev
+              : { x: activeNode.x, y: activeNode.y },
+          );
+        }
       }
     }
-  }, [animateFrom, animateTo, nextChapterId, mounted, isLoaded, nodePositions]);
+  }, [
+    animateFrom,
+    animateTo,
+    nextChapterId,
+    mounted,
+    isLoaded,
+    nodePositions,
+    isBookCompleted,
+    treasureX,
+    treasureY,
+  ]);
+
   let pathD = "";
   if (nodePositions.length > 0) {
     pathD = `M ${nodePositions[0].x} ${nodePositions[0].y}`;

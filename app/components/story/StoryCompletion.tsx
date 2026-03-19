@@ -45,7 +45,7 @@ export function StoryCompletion({
     <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-2xl z-50 animate-in fade-in duration-500">
       <div className="text-center p-8">
         <h2 className="text-4xl font-serif font-bold mb-8">
-          Chapter Complete! 🎉
+          {!nextChapterId ? "Book Complete! 🏆" : "Chapter Complete! 🎉"}
         </h2>
 
         {/* Star Rating Display */}
@@ -72,31 +72,47 @@ export function StoryCompletion({
 
         {/* Dynamic Praise Message */}
         <div className="mb-10 max-w-sm mx-auto h-16 flex items-center justify-center">
-          {stars === 3 && (
-            <p className="text-amber-400 font-bold text-lg animate-in slide-in-from-bottom-2 fade-in duration-500 delay-500">
-              Outstanding! You're a true scholar! 🌟
+          {!nextChapterId ? (
+            <p className="text-amber-400 font-bold text-lg animate-in slide-in-from-bottom-2 fade-in duration-500 delay-150">
+              Amazing! You have finished the entire book! 🏆✨
             </p>
-          )}
-          {stars === 2 && (
-            <p className="text-amber-200 text-md animate-in slide-in-from-bottom-2 fade-in duration-500 delay-300">
-              Great job! Add some spiritual gems (notes) to earn 3 stars! ✨
-            </p>
-          )}
-          {stars === 1 && (
-            <p className="text-stone-400 text-md animate-in slide-in-from-bottom-2 fade-in duration-500 delay-150">
-              Good start! Save some favorites or add gems to earn more stars! ⭐
-            </p>
+          ) : (
+            <>
+              {stars === 3 && (
+                <p className="text-amber-400 font-bold text-lg animate-in slide-in-from-bottom-2 fade-in duration-500 delay-500">
+                  Outstanding! You're a true scholar! 🌟
+                </p>
+              )}
+              {stars === 2 && (
+                <p className="text-amber-200 text-md animate-in slide-in-from-bottom-2 fade-in duration-500 delay-300">
+                  Great job! Add some spiritual gems (notes) to earn 3 stars! ✨
+                </p>
+              )}
+              {stars === 1 && (
+                <p className="text-stone-400 text-md animate-in slide-in-from-bottom-2 fade-in duration-500 delay-150">
+                  Good start! Save some favorites or add gems to earn more
+                  stars! ⭐
+                </p>
+              )}
+            </>
           )}
         </div>
 
         {/* Navigation Buttons */}
         <div className="flex flex-col gap-4 items-center">
-          {nextChapterId && (
+          {nextChapterId ? (
             <Link
               href={`/book/${bookId}?animateTo=${nextChapterId}&animateFrom=${currentChapter}`}
               className="bg-amber-500 text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-amber-400 transition transform hover:scale-105"
             >
               Next Chapter
+            </Link>
+          ) : (
+            <Link
+              href={`/book/${bookId}?animateTo=treasure&animateFrom=${currentChapter}`}
+              className="bg-amber-500 text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-amber-400 transition transform hover:scale-105"
+            >
+              Claim Treasure
             </Link>
           )}
           <Link
