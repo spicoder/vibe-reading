@@ -18,6 +18,8 @@ import GamifiedMap from "./components/GamifiedMap";
 import CommunityGemsModal from "./components/GemsModal";
 import { getBookTheme } from "./theme";
 import BottomNav from "@/app/components/BottomNav";
+import Leaderboard from "@/app/components/Leaderboard";
+import { div } from "framer-motion/client";
 
 // Helper to generate a consistent random background color per book
 const getBookBgColor = (bookId: string) => {
@@ -95,6 +97,16 @@ function BookPageContent() {
   return (
     <main className={`min-h-screen ${bgColor} pb-40 font-sans relative`}>
       <BookHeader title={book.title} />
+
+      {isLoaded && (
+        <div className="absolute top-6 right-6 z-50">
+          <Leaderboard
+            allPlayers={allPlayers as PlayerProfile[]}
+            bookId={bookId}
+            chapters={chapters}
+          />
+        </div>
+      )}
 
       {/* Main Map Area */}
       <div className="pt-1">
