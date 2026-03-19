@@ -8,7 +8,6 @@ import {
 } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Map, Heart, Bookmark } from "lucide-react";
 import { bibleBooks } from "@/app/lib/data";
 import { useMultiplayer, PlayerProfile } from "@/app/lib/MultiplayerContext";
 
@@ -18,6 +17,7 @@ import BookHero from "./components/BookHero";
 import GamifiedMap from "./components/GamifiedMap";
 import CommunityGemsModal from "./components/GemsModal";
 import { getBookTheme } from "./theme";
+import BottomNav from "@/app/components/BottomNav";
 
 // Helper to generate a consistent random background color per book
 const getBookBgColor = (bookId: string) => {
@@ -132,35 +132,7 @@ function BookPageContent() {
         </div>
 
         {/* Bottom Navigation Bar */}
-        <div className="bg-white border-t border-stone-200 px-8 py-3 w-full max-w-md flex justify-between items-center pointer-events-auto rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
-          <Link
-            href={`/book/${bookId}`}
-            className="flex flex-col items-center text-amber-500 hover:scale-105 transition-transform"
-          >
-            <Map size={24} strokeWidth={2.5} />
-            <span className="text-[10px] font-bold mt-1 tracking-wide">
-              Map
-            </span>
-          </Link>
-          <Link
-            href="/favorites"
-            className="flex flex-col items-center text-stone-400 hover:text-rose-400 hover:scale-105 transition-all"
-          >
-            <Heart size={24} strokeWidth={2.5} />
-            <span className="text-[10px] font-bold mt-1 tracking-wide">
-              Favorites
-            </span>
-          </Link>
-          <Link
-            href="/spiritual-gems"
-            className="flex flex-col items-center text-stone-400 hover:text-amber-500 hover:scale-105 transition-all"
-          >
-            <Bookmark size={24} strokeWidth={2.5} />
-            <span className="text-[10px] font-bold mt-1 tracking-wide">
-              Gems
-            </span>
-          </Link>
-        </div>
+        <BottomNav bookId={bookId} />
       </div>
 
       {viewingGems && (

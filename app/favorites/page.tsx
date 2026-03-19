@@ -6,6 +6,7 @@ import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
 import { useRouter } from "next/navigation";
+import BottomNav from "../components/BottomNav";
 
 const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
   const items: { id: string }[] = [];
@@ -237,6 +238,10 @@ export default function FavoritesPage() {
           </div>
         </div>
       )}
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none flex flex-col items-center">
+        <BottomNav />
+      </div>
     </main>
   );
 }
