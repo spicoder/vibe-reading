@@ -297,6 +297,7 @@ export default function GamifiedMap({
           >
             <div className="text-4xl drop-shadow-2xl animate-[bounce_2s_infinite]">
               {currentUser?.avatar || "👤"}
+              <p className="text-black text-center text-xs bg-white border border-stone-200">{`${currentUser?.name}`}</p>
             </div>
           </div>
         )}
@@ -390,10 +391,11 @@ export default function GamifiedMap({
                     {playersOnThisNode.slice(0, 3).map((player) => (
                       <div
                         key={player.id}
-                        className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center text-xs shadow-sm"
+                        className="w-10 h-10 rounded-full bg-white border border-stone-200 flex flex-col text-2xl shadow-sm"
                         title={player.name}
                       >
                         {player.avatar}
+                        <p className="text-black text-center text-xs bg-white border border-stone-200">{`${player.name}`}</p>
                       </div>
                     ))}
                   </div>
