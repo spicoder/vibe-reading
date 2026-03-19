@@ -32,7 +32,6 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
 
   let currentGroup: Verse[] = [];
   const addedVisuals = new Set<number>();
-
   const chapterNumber = chapter.chapter;
 
   const flushGroup = () => {
@@ -67,7 +66,6 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
 
     const combinedText = currentGroup.map((v) => v.text).join(" ");
     const speaker = firstVerse.speaker;
-
     const uniqueVerseId = `chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
 
     items.push({
@@ -101,7 +99,6 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   }
 
   flushGroup();
-
   return items;
 };
 
@@ -125,10 +122,12 @@ function StoryViewerContent({
   const [showGrid, setShowGrid] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // NEW: Introduce an explicit completion state instead of relying on isLastSlide
+  const [isStoryComplete, setIsStoryComplete] = useState(false);
+
   const { isFavorite, toggleFavorite, markAsCompleted } = useMultiplayer();
 
   const currentSlide = slides[currentIndex];
-  const isLastSlide = currentIndex === slides.length - 1;
   const currentSegmentIndex = currentSlide.segmentIndex;
   const segmentSlides = slides.filter(
     (s) => s.segmentIndex === currentSegmentIndex,
@@ -136,7 +135,7 @@ function StoryViewerContent({
   const indexInSegment = segmentSlides.indexOf(currentSlide);
 
   useEffect(() => {
-    if (isLastSlide) {
+    if (isStoryComplete) {
       markAsCompleted(`${bookId}-${currentChapter}`);
       confetti({
         particleCount: 150,
@@ -145,13 +144,16 @@ function StoryViewerContent({
         colors: ["#F59E0B", "#FDE68A", "#FFFFFF"],
       });
     }
-  }, [isLastSlide, currentChapter, bookId, markAsCompleted]);
+  }, [isStoryComplete, currentChapter, bookId, markAsCompleted]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < slides.length - 1) {
       setDirection(1);
       setCurrentIndex((prev) => prev + 1);
       setProgress(0);
+    } else {
+      // Trigger completion only when moving past the final slide
+      setIsStoryComplete(true);
     }
   }, [currentIndex, slides.length]);
 
@@ -160,6 +162,7 @@ function StoryViewerContent({
       setDirection(-1);
       setCurrentIndex((prev) => prev - 1);
       setProgress(0);
+      setIsStoryComplete(false); // Make sure to hide completion if going back
     }
   }, [currentIndex]);
 
@@ -167,10 +170,12 @@ function StoryViewerContent({
     setCurrentIndex(idx);
     setProgress(0);
     setShowGrid(false);
+    setIsStoryComplete(false);
   };
 
   useEffect(() => {
-    if (isPaused || isLastSlide || showGrid) return;
+    // Note: Replaced isLastSlide with isStoryComplete so the timer runs to 100 on the last slide
+    if (isPaused || isStoryComplete || showGrid) return;
     const INTERVAL_MS = 50;
     const INCREMENT = (INTERVAL_MS / 15000) * 100;
 
@@ -184,18 +189,18 @@ function StoryViewerContent({
       });
     }, INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [isPaused, handleNext, isLastSlide, showGrid]);
+  }, [isPaused, handleNext, isStoryComplete, showGrid]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showGrid) return;
+      if (showGrid || isStoryComplete) return;
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === " ") setIsPaused((p) => !p);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext, handlePrev, showGrid]);
+  }, [handleNext, handlePrev, showGrid, isStoryComplete]);
 
   const verseData = currentSlide.type === "verse" ? currentSlide.data : null;
   const currentTheme = verseData
@@ -278,10 +283,11 @@ function StoryViewerContent({
       />
 
       <StoryCompletion
-        isLastSlide={isLastSlide}
+        isStoryComplete={isStoryComplete} // Updated Prop
         showGrid={showGrid}
         currentChapter={currentChapter}
-        bookId={bookId} // <-- Passed down
+        bookId={bookId}
+        bookTitle={bookTitle} // Passed down for correct Gems lookup
         nextChapterId={nextChapterId}
       />
     </div>
