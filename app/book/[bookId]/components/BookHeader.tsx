@@ -15,20 +15,6 @@ export default function BookHeader({ title }: { title: string }) {
           {title}
         </h1>
       </div>
-      <div className="flex items-center gap-3">
-        <Link
-          href="/favorites"
-          className="p-2 bg-stone-100 rounded-full text-stone-600 hover:bg-amber-100 hover:text-amber-600 transition-colors shadow-sm"
-        >
-          <Heart size={20} />
-        </Link>
-        <Link
-          href="/spiritual-gems"
-          className="p-2 bg-stone-100 rounded-full text-stone-600 hover:bg-amber-100 hover:text-amber-600 transition-colors shadow-sm"
-        >
-          <Bookmark size={20} />
-        </Link>
-      </div>
     </header>
   );
 }

@@ -15,61 +15,46 @@ export default function BookHero({
   nextChapterId,
   nextChapter,
   isChapterDone,
-  theme,
 }: BookHeroProps) {
   if (!nextChapter) return null;
 
   return (
-    <section className="px-4 mb-8">
-      <div className="bg-stone-900 rounded-4xl p-8 text-white relative overflow-hidden min-h-[350px] flex flex-col justify-end shadow-2xl">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
-
-        {nextChapter.visuals?.[0]?.imageSrc && (
-          <div className="absolute inset-0 z-0">
-            <Image
-              src={nextChapter.visuals[0].imageSrc}
-              alt="Background"
-              fill
-              className="object-cover opacity-40"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent"></div>
-          </div>
-        )}
-
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full mb-4 border border-white/20">
-            <Sparkles size={12} className="text-amber-400" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">
-              {isChapterDone ? "Review Chapter" : "Next Reading"}
-            </span>
-          </div>
-
-          <h2 className="text-4xl font-serif font-bold mb-4">
-            Chapter {nextChapter.chapter}
-          </h2>
-
-          <div className="flex flex-col gap-2 mb-8 max-w-md">
-            {nextChapter.visuals?.map((visual: any, index: number) => (
-              <div key={index} className="flex gap-3 items-start">
-                <div
-                  className={`w-1 h-1 rounded-full ${theme.doneBg} mt-2 shrink-0`}
-                />
-                <p className="text-stone-300 text-sm leading-tight font-medium">
-                  {visual.title}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            href={`/book/${bookId}/${nextChapterId}`}
-            className="bg-white text-black px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs inline-flex items-center gap-2 hover:scale-105 transition-transform w-fit shadow-xl"
-          >
-            <Play size={14} fill="currentColor" />
-            {isChapterDone ? "Continue Reading" : "Start Reading"}
-          </Link>
+    <div className="bg-blue-300 rounded-3xl p-3 pl-4 pr-3 text-gray-800 relative overflow-hidden flex items-center shadow-2xl gap-4 mx-auto max-w-sm border-stone-700">
+      {/* Background Texture & Image */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
+      {nextChapter.visuals?.[0]?.imageSrc && (
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={nextChapter.visuals[0].imageSrc}
+            alt="Background"
+            fill
+            className="object-cover opacity-30 mix-blend-overlay"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/80 to-transparent"></div>
         </div>
+      )}
+
+      {/* Content */}
+      <div className="relative z-10 flex-1">
+        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white backdrop-blur-md rounded-full mb-1.5 border border-black/10">
+          <Sparkles size={10} className="text-amber-400" />
+          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-800">
+            {isChapterDone ? "Review Mode" : "Next Level"}
+          </span>
+        </div>
+
+        <h2 className="text-xl font-serif font-bold leading-none">
+          Chapter {nextChapter.chapter}
+        </h2>
       </div>
-    </section>
+
+      {/* Call to Action Play Button */}
+      <Link
+        href={`/book/${bookId}/${nextChapterId}`}
+        className="relative z-10 bg-white text-stone-900 w-12 h-12 rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+      >
+        <Play size={20} fill="currentColor" className="ml-1" />
+      </Link>
+    </div>
   );
 }
