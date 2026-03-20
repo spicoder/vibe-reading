@@ -65,7 +65,7 @@ export function SellTab({ onSubmit }: { onSubmit: (item: any) => void }) {
         </label>
         <textarea
           required
-          placeholder="e.g., I will bring it to church on Sunday."
+          placeholder="e.g., I will deliver it via Grab"
           className="w-full border border-stone-300 rounded-lg p-3 h-20"
           value={newItem.instructions}
           onChange={(e) =>
