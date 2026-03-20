@@ -118,7 +118,7 @@ function StoreContent() {
           <ArrowLeft size={24} />
         </button>
         <StoreIcon size={32} className="text-amber-500" />
-        <h1 className="text-xl font-serif font-bold">Rewards Market</h1>
+        <h1 className="text-lg font-serif font-bold">Rewards Market</h1>
         <div className="ml-auto">
           <StarWallet />
         </div>

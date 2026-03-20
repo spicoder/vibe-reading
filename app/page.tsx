@@ -2,7 +2,7 @@
 
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import AuthView from "./components/AuthView";
-import LibraryView from "./components/LibraryView";
+import LibraryView from "./components/library/LibraryView";
 
 export default function Home() {
   const { currentUser, isLoaded } = useMultiplayer();
