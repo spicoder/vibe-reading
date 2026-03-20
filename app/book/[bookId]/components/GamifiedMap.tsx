@@ -1,8 +1,12 @@
-import Link from "next/link";
-import Image from "next/image";
-import { MessageCircle, Trophy, Crown, Star } from "lucide-react";
-import { PlayerProfile } from "@/app/lib/MultiplayerContext";
 import { useEffect, useRef, useState, useMemo } from "react";
+import { PlayerProfile } from "@/app/lib/MultiplayerContext";
+
+// Newly Extracted Sub-Components
+import MapRoad from "./map/MapRoad";
+import MapScenery from "./map/MapScenery";
+import MapTreasure from "./map/MapTreasure";
+import MapAvatar from "./map/MapAvatar";
+import MapChapterNode from "./MapChapterNode"; // Or ./map/MapChapterNode if you moved it inside
 
 interface GamifiedMapProps {
   book: any;
@@ -43,7 +47,7 @@ export default function GamifiedMap({
   const NODE_SPACING = 150;
   const containerHeight = chapters.length * NODE_SPACING + 250;
 
-  // Invert the Y-axis so Chapter 1 starts at the bottom and goes "uphill"
+  // 1. Calculate Node Positions (Invert Y-axis so Chapter 1 starts at the bottom)
   const nodePositions = useMemo(() => {
     return chapters.map(([id, chapter], i) => {
       const x = 200 + Math.sin(i * 0.8) * 110;
@@ -52,17 +56,31 @@ export default function GamifiedMap({
     });
   }, [chapters, containerHeight]);
 
+  // 2. Calculate Treasure Position (At the very top of the path)
   const treasureX = 200;
   const treasureY =
     nodePositions.length > 0
       ? nodePositions[nodePositions.length - 1].y - 130
       : 100;
 
+  // 3. Generate SVG Path connecting all nodes and the treasure
+  let pathD = "";
+  if (nodePositions.length > 0) {
+    pathD = `M ${nodePositions[0].x} ${nodePositions[0].y}`;
+    for (let i = 1; i < nodePositions.length; i++) {
+      const prev = nodePositions[i - 1];
+      const curr = nodePositions[i];
+      pathD += ` C ${prev.x} ${prev.y - 75}, ${curr.x} ${curr.y + 75}, ${curr.x} ${curr.y}`;
+    }
+    const lastNode = nodePositions[nodePositions.length - 1];
+    pathD += ` C ${lastNode.x} ${lastNode.y - 65}, ${treasureX} ${treasureY + 65}, ${treasureX} ${treasureY + 20}`;
+  }
+
+  // 4. Handle Avatar Position and Movement Animations
   const [avatarPos, setAvatarPos] = useState<{ x: number; y: number } | null>(
     null,
   );
 
-  // Handle avatar movement animation
   useEffect(() => {
     if (!mounted || !isLoaded) return;
 
@@ -83,10 +101,10 @@ export default function GamifiedMap({
         const toNode = nodePositions.find((n) => n.id === animateTo);
 
         if (fromNode && toNode) {
-          // 1. Instantly snap to the start position
+          // Instantly snap to the start position
           setAvatarPos({ x: fromNode.x, y: fromNode.y });
 
-          // 2. Wait 800ms for the map's fade-in transition to mostly finish, THEN move
+          // Wait 800ms for the map's fade-in transition to mostly finish, THEN move
           const timer = setTimeout(() => {
             setAvatarPos({ x: toNode.x, y: toNode.y });
           }, 800);
@@ -120,81 +138,7 @@ export default function GamifiedMap({
     treasureY,
   ]);
 
-  let pathD = "";
-  if (nodePositions.length > 0) {
-    pathD = `M ${nodePositions[0].x} ${nodePositions[0].y}`;
-    for (let i = 1; i < nodePositions.length; i++) {
-      const prev = nodePositions[i - 1];
-      const curr = nodePositions[i];
-      pathD += ` C ${prev.x} ${prev.y - 75}, ${curr.x} ${curr.y + 75}, ${curr.x} ${curr.y}`;
-    }
-    const lastNode = nodePositions[nodePositions.length - 1];
-    pathD += ` C ${lastNode.x} ${lastNode.y - 65}, ${treasureX} ${treasureY + 65}, ${treasureX} ${treasureY + 20}`;
-  }
-
-  // Sparsely generated background scenery (Reduced density)
-  const sceneryElements: any[] = [];
-  const numSceneryRow = Math.floor(containerHeight / 180); // Increased spacing from 90 to 180
-
-  for (let i = 0; i < numSceneryRow; i++) {
-    const y = containerHeight - (i * 180 + 60);
-    const rollLeft = Math.abs(Math.sin(i * 21));
-    const rollRight = Math.abs(Math.cos(i * 23));
-
-    const getType = (roll: number) => {
-      if (roll > 0.7) return "pine";
-      if (roll > 0.4) return "tree";
-      if (roll > 0.2) return "bush";
-      return "cloud";
-    };
-
-    sceneryElements.push({
-      id: `scen-L-${i}`,
-      type: getType(rollLeft),
-      x: 20 + rollLeft * 40,
-      y: y + rollLeft * 40,
-      scale: 0.7 + rollLeft * 0.3,
-      flip: rollLeft > 0.5,
-    });
-
-    sceneryElements.push({
-      id: `scen-R-${i}`,
-      type: getType(rollRight),
-      x: MAP_WIDTH - 20 - rollRight * 40,
-      y: y + rollRight * 40,
-      scale: 0.7 + rollRight * 0.3,
-      flip: rollRight > 0.5,
-    });
-  }
-
-  const renderScenery = (item: any) => {
-    const transform = `scale(${item.scale}) ${item.flip ? "scaleX(-1)" : ""}`;
-
-    // Define the source based on the type
-    let imageSrc = "";
-    if (item.type === "pine") imageSrc = "/assets/3d/pine-tree.png";
-    if (item.type === "tree") imageSrc = "/assets/3d/round-tree.png";
-    if (item.type === "bush") imageSrc = "/assets/3d/bush.png";
-    if (item.type === "cloud") imageSrc = "/assets/3d/cloud.png";
-
-    if (!imageSrc) return null;
-
-    return (
-      <div
-        className="relative drop-shadow-lg opacity-90 transition-transform hover:scale-110"
-        style={{ transform }}
-      >
-        <Image
-          src={imageSrc}
-          alt={`${item.type} scenery`}
-          width={80} // Adjust base size based on your assets
-          height={80}
-          className="object-contain"
-        />
-      </div>
-    );
-  };
-
+  // 5. Scroll to active node on mount or when navigation finishes
   useEffect(() => {
     if (mounted && isLoaded && activeNodeRef.current) {
       setTimeout(() => {
@@ -204,7 +148,7 @@ export default function GamifiedMap({
         });
       }, 300);
     }
-  }, [mounted, isLoaded, nextChapterId]);
+  }, [mounted, isLoaded, nextChapterId, animateTo]);
 
   return (
     <section className="w-full overflow-hidden px-4 py-8 relative">
@@ -214,247 +158,47 @@ export default function GamifiedMap({
         }`}
         style={{ height: containerHeight }}
       >
-        {/* SVG Volumetric Road Layers */}
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-md z-0"
-          viewBox={`0 0 ${MAP_WIDTH} ${containerHeight}`}
-          preserveAspectRatio="none"
-        >
-          <path
-            d={pathD}
-            fill="none"
-            stroke="#d4c5b0"
-            strokeWidth="60"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            transform="translate(0, 12)"
-            className="opacity-50"
-          />
-          <path
-            d={pathD}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="60"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="opacity-90"
-          />
-          <path
-            d={pathD}
-            fill="none"
-            stroke="#e7e5e4"
-            strokeWidth="4"
-            strokeDasharray="12 20"
-            strokeLinecap="round"
-          />
-        </svg>
+        {/* Layer 1: Volumetric Road */}
+        <MapRoad
+          pathD={pathD}
+          mapWidth={MAP_WIDTH}
+          containerHeight={containerHeight}
+        />
 
-        {/* Scenery Layer */}
-        {sceneryElements.map((item) => (
-          <div
-            key={item.id}
-            className="absolute -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none"
-            style={{ left: `${(item.x / MAP_WIDTH) * 100}%`, top: item.y }}
-          >
-            {renderScenery(item)}
-          </div>
-        ))}
+        {/* Layer 2: Scenery (Trees, Bushes, Clouds) */}
+        <MapScenery containerHeight={containerHeight} mapWidth={MAP_WIDTH} />
 
-        {/* Streamlined Treasure Design */}
+        {/* Layer 3: The Final Treasure */}
         {nodePositions.length > 0 && (
-          <div
-            className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20 animate-[bounce_3s_infinite]"
-            style={{
-              left: `${(treasureX / MAP_WIDTH) * 100}%`,
-              top: treasureY,
-            }}
-          >
-            <div className="relative group cursor-pointer hover:scale-110 transition-transform duration-300 flex flex-col items-center">
-              <div className="absolute inset-0 bg-amber-400 blur-[25px] opacity-40 rounded-full scale-[2]"></div>
-              <Crown
-                size={40}
-                className="text-amber-400 drop-shadow-md z-30 -mb-3 fill-amber-300"
-              />
-              <Trophy
-                size={56}
-                className="text-amber-300 drop-shadow-lg z-20 fill-amber-200"
-              />
-            </div>
-          </div>
+          <MapTreasure x={treasureX} y={treasureY} mapWidth={MAP_WIDTH} />
         )}
 
-        {/* 1. Animated Floating Avatar */}
+        {/* Layer 4: The Player's Avatar */}
         {avatarPos && (
-          <div
-            className="absolute z-50 pointer-events-none"
-            style={{
-              left: `${(avatarPos.x / MAP_WIDTH) * 100}%`,
-              top: avatarPos.y,
-              transform: "translate(-50%, -120%)",
-              // Added inline transition to guarantee it fires smoothly
-              transition: "left 1.2s ease-in-out, top 1.2s ease-in-out",
-            }}
-          >
-            <div className="text-4xl drop-shadow-2xl animate-[bounce_2s_infinite]">
-              {currentUser?.avatar || "👤"}
-              <p className="text-black text-center text-xs bg-white border border-stone-200">{`${currentUser?.name}`}</p>
-            </div>
-          </div>
+          <MapAvatar
+            avatarPos={avatarPos}
+            mapWidth={MAP_WIDTH}
+            currentUser={currentUser}
+          />
         )}
 
-        {/* Chapter Nodes */}
-        {nodePositions.map((pos) => {
-          const isDone = completedChapters.includes(`${bookId}-${pos.id}`);
-          const isActive = !isDone && pos.id === nextChapterId;
-          const thumbnail = pos.chapter.visuals[0]?.imageSrc;
-          const isRightSide = pos.x > 200;
-
-          // Compute Stars Based on Activity
-          let userStarsCount = 1; // Base 1 star for reading
-          if (isDone) {
-            const chapterPrefix = `${book.title} ${pos.id}:`;
-            const hasGems = Object.keys(currentUser?.gems || {}).some((ref) =>
-              ref.startsWith(chapterPrefix),
-            );
-            const hasFavs = currentUser?.favorites?.some((fav) =>
-              fav.startsWith(`chapter-${pos.id}-`),
-            );
-
-            if (hasGems) userStarsCount = 3;
-            else if (hasFavs) userStarsCount = 2;
-          }
-
-          const playersOnThisNode = allPlayers.filter((player) => {
-            if (player.id === currentUser?.id) return false;
-            const playerNextChapter =
-              chapters.find(
-                ([id]) => !player.completedChapters.includes(`${bookId}-${id}`),
-              )?.[0] || "1";
-            return playerNextChapter === pos.id;
-          });
-
-          const communityGems: any[] = [];
-          const chapterPrefix = `${book.title} ${pos.id}:`;
-          allPlayers.forEach((player) => {
-            if (!player.gems) return;
-            Object.entries(player.gems).forEach(([ref, content]) => {
-              if (ref.startsWith(chapterPrefix))
-                communityGems.push({ player, ref, content: content as string });
-            });
-          });
-
-          return (
-            <div
-              key={pos.id}
-              ref={isActive ? activeNodeRef : null}
-              style={{ left: `${(pos.x / MAP_WIDTH) * 100}%`, top: pos.y }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-30"
-            >
-              <Link
-                href={`/book/${bookId}/${pos.id}`}
-                className={`relative group flex items-center justify-center transition-transform duration-300 ${isDone ? "hover:-translate-y-1" : ""}`}
-              >
-                {/* Cleaned up 3D Candy Node Button */}
-                <div
-                  className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 relative font-black text-2xl
-                  ${
-                    isActive
-                      ? `bg-green-400 border-[3px] border-white shadow-[0_6px_0_#16a34a,0_10px_15px_rgba(0,0,0,0.2)] scale-[1.15] z-20 text-white`
-                      : isDone
-                        ? `bg-amber-400 border-[3px] border-white shadow-[0_6px_0_#d97706,0_8px_10px_rgba(0,0,0,0.15)] text-white hover:shadow-[0_3px_0_#d97706,0_5px_10px_rgba(0,0,0,0.15)] z-10`
-                        : `bg-stone-200 border-[3px] border-white text-stone-400 scale-90 shadow-[0_4px_0_#a8a29e,0_5px_10px_rgba(0,0,0,0.1)] z-0`
-                  }`}
-                >
-                  <div className="transform -translate-y-0.5">{pos.id}</div>
-                </div>
-
-                {/* Added Star System Badge for completed chapters */}
-                {isDone && (
-                  <div className="absolute -bottom-3 bg-white px-2 py-0.5 rounded-full shadow-md flex items-center gap-0.5 z-40 border border-stone-200/50">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={12}
-                        className={
-                          i < userStarsCount
-                            ? "fill-amber-400 text-amber-500 drop-shadow-sm"
-                            : "fill-stone-200 text-stone-300"
-                        }
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Multiplayer Avatars */}
-                {playersOnThisNode.length > 0 && (
-                  <div className="absolute -top-3 -left-5 flex -space-x-2 z-30 drop-shadow-sm">
-                    {playersOnThisNode.slice(0, 3).map((player) => (
-                      <div
-                        key={player.id}
-                        className="w-10 h-10 rounded-full bg-white border border-stone-200 flex flex-col text-2xl shadow-sm"
-                        title={player.name}
-                      >
-                        {player.avatar}
-                        <p className="text-black text-center text-xs bg-white border border-stone-200">{`${player.name}`}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Community Gems */}
-                {communityGems.length > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onViewGems({ chapter: pos.id, gems: communityGems });
-                    }}
-                    className="absolute -bottom-2 -left-2 w-8 h-8 bg-amber-50 border-2 border-white rounded-full flex items-center justify-center text-amber-500 shadow-sm hover:scale-110 transition-all z-40"
-                  >
-                    <MessageCircle size={14} className="fill-amber-200" />
-                  </button>
-                )}
-
-                {/* Thumbnail Signpost */}
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-2 w-max
-                  ${isRightSide ? "right-full mr-3 flex-row-reverse" : "left-full ml-3"}
-                  ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-all duration-300 pointer-events-none`}
-                >
-                  <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-xl shadow-sm flex items-center gap-2 border border-stone-100">
-                    {thumbnail ? (
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden relative border border-stone-200">
-                        <Image
-                          src={thumbnail}
-                          alt=""
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center">
-                        <span className="font-serif text-stone-400 font-bold text-sm">
-                          {pos.chapter.chapter}
-                        </span>
-                      </div>
-                    )}
-
-                    <div
-                      className={`flex flex-col px-1 ${isRightSide ? "items-end text-right" : "items-start text-left"}`}
-                    >
-                      <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-0.5">
-                        Chapter
-                      </span>
-                      <span className="text-lg font-black font-serif text-stone-700 leading-none">
-                        {pos.chapter.chapter}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          );
-        })}
+        {/* Layer 5: Chapter Nodes */}
+        {nodePositions.map((pos) => (
+          <MapChapterNode
+            key={pos.id}
+            pos={pos}
+            bookId={bookId}
+            bookTitle={book.title}
+            completedChapters={completedChapters}
+            nextChapterId={nextChapterId}
+            currentUser={currentUser}
+            allPlayers={allPlayers}
+            chapters={chapters}
+            onViewGems={onViewGems}
+            MAP_WIDTH={MAP_WIDTH}
+            nodeRef={pos.id === nextChapterId ? activeNodeRef : undefined}
+          />
+        ))}
       </div>
     </section>
   );
