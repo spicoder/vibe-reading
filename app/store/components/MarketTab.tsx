@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { MarketListing, PlayerProfile } from "@/app/lib/MultiplayerContext";
+import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 
 export function MarketTab({
   listings,
@@ -10,6 +11,7 @@ export function MarketTab({
   currentUser: PlayerProfile;
   onBuy: (l: MarketListing) => void;
 }) {
+  const { removeListing } = useMultiplayer();
   const activeListings = listings.filter((l) => l.status === "active");
 
   if (activeListings.length === 0) {
@@ -57,6 +59,16 @@ export function MarketTab({
               This is your listing
             </div>
           )}
+          {listing.sellerId === currentUser.id ? (
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => removeListing(listing.id)}
+                className="bg-red-100 text-red-600 px-3 py-1 rounded text-sm font-bold"
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
         </div>
       ))}
     </div>

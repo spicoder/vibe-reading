@@ -10,6 +10,8 @@ import {
   increment,
   query,
   where,
+  deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { PlayerProfile, AppNotification } from "../multiplayerTypes";
@@ -193,6 +195,22 @@ export function usePlayerLogic() {
     await updateDoc(doc(db, "notifications", id), { read: true });
   };
 
+  const clearNotification = async (id: string) => {
+    await deleteDoc(doc(db, "notifications", id));
+  };
+
+  const clearAllNotifications = async () => {
+    if (!currentUser || notifications.length === 0) return;
+
+    const batch = writeBatch(db);
+    notifications.forEach((n) => {
+      const notifRef = doc(db, "notifications", n.id);
+      batch.delete(notifRef);
+    });
+
+    await batch.commit();
+  };
+
   return {
     currentUser,
     allPlayers,
@@ -210,5 +228,7 @@ export function usePlayerLogic() {
     deleteGem,
     getGem,
     markNotificationRead,
+    clearNotification,
+    clearAllNotifications,
   };
 }

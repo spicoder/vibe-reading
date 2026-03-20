@@ -140,6 +140,23 @@ export function useMarketLogic(currentUser: PlayerProfile | null) {
     });
   };
 
+  const editListing = async (
+    listingId: string,
+    updates: Partial<MarketListing>,
+  ) => {
+    if (!currentUser) return;
+    // Only allow editing if the status is active (e.g. not already handed over/redeemed)
+    await updateDoc(doc(db, "market_listings", listingId), updates);
+  };
+
+  const removeListing = async (listingId: string) => {
+    if (!currentUser) return;
+    // Changing status to "cancelled" removes it from the active query
+    await updateDoc(doc(db, "market_listings", listingId), {
+      status: "cancelled",
+    });
+  };
+
   return {
     activeListings,
     myOrders,
@@ -147,5 +164,7 @@ export function useMarketLogic(currentUser: PlayerProfile | null) {
     buyItem,
     completeHandover,
     cancelAndRefundOrder,
+    editListing,
+    removeListing,
   };
 }
