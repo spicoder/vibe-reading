@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import {
   useMultiplayer,
   MarketListing,
@@ -14,7 +14,8 @@ import { MarketTab } from "./components/MarketTab";
 import { HandoversTab } from "./components/HandoversTab";
 import { SellTab } from "./components/SellTab";
 
-export default function StorePage() {
+// 1. Create a sub-component for the content that needs search params
+function StoreContent() {
   const {
     currentUser,
     activeListings,
@@ -24,11 +25,15 @@ export default function StorePage() {
     completeHandover,
     cancelAndRefundOrder,
   } = useMultiplayer();
+
   const [activeTab, setActiveTab] = useState<"market" | "sell" | "handovers">(
     "market",
   );
   const router = useRouter();
-  const returnTo = useSearchParams().get("returnTo");
+
+  // useSearchParams is now inside the Suspense boundary
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   const [modal, setModal] = useState<{
     isOpen: boolean;
@@ -37,6 +42,7 @@ export default function StorePage() {
     message: string;
     onConfirm?: () => void;
   }>({ isOpen: false, type: "alert", title: "", message: "" });
+
   const closeModal = () => setModal((prev) => ({ ...prev, isOpen: false }));
 
   if (!currentUser)
@@ -100,74 +106,79 @@ export default function StorePage() {
     });
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] pb-24 text-stone-900 pt-20 px-4">
+    <div className="max-w-md mx-auto">
       <StoreModal modal={modal} closeModal={closeModal} />
-
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={() =>
-              router.push(returnTo ? decodeURIComponent(returnTo) : "/")
-            }
-            className="p-2 bg-white border border-stone-200 rounded-full text-stone-600 hover:bg-stone-100 transition-colors shadow-sm"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <StoreIcon size={32} className="text-amber-500" />
-          <h1 className="text-xl font-serif font-bold">Rewards Market</h1>
-          <div className="ml-auto">
-            <StarWallet />
-          </div>
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() =>
+            router.push(returnTo ? decodeURIComponent(returnTo) : "/")
+          }
+          className="p-2 bg-white border border-stone-200 rounded-full text-stone-600 hover:bg-stone-100 transition-colors shadow-sm"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <StoreIcon size={32} className="text-amber-500" />
+        <h1 className="text-xl font-serif font-bold">Rewards Market</h1>
+        <div className="ml-auto">
+          <StarWallet />
         </div>
-
-        <div className="flex bg-stone-200 rounded-lg p-1 mb-6">
-          {["market", "handovers", "sell"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`flex-1 py-2 text-sm font-bold rounded-md transition capitalize ${activeTab === tab ? "bg-white shadow" : "text-stone-500"}`}
-            >
-              {tab === "sell" ? "Sell Item" : tab}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === "market" && (
-          <MarketTab
-            listings={activeListings}
-            currentUser={currentUser}
-            onBuy={handleBuy}
-          />
-        )}
-        {activeTab === "handovers" && (
-          <HandoversTab
-            orders={myOrders}
-            listings={activeListings}
-            currentUser={currentUser}
-            onHandover={handleHandover}
-            onCancel={handleCancel}
-          />
-        )}
-        {activeTab === "sell" && (
-          <SellTab
-            onSubmit={(item) => {
-              createListing(
-                item.name,
-                item.desc,
-                item.instructions,
-                item.price,
-              );
-              setActiveTab("market");
-              setModal({
-                isOpen: true,
-                type: "alert",
-                title: "Success!",
-                message: "Item listed successfully!",
-              });
-            }}
-          />
-        )}
       </div>
+
+      <div className="flex bg-stone-200 rounded-lg p-1 mb-6">
+        {["market", "handovers", "sell"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as any)}
+            className={`flex-1 py-2 text-sm font-bold rounded-md transition capitalize ${activeTab === tab ? "bg-white shadow" : "text-stone-500"}`}
+          >
+            {tab === "sell" ? "Sell Item" : tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "market" && (
+        <MarketTab
+          listings={activeListings}
+          currentUser={currentUser}
+          onBuy={handleBuy}
+        />
+      )}
+      {activeTab === "handovers" && (
+        <HandoversTab
+          orders={myOrders}
+          listings={activeListings}
+          currentUser={currentUser}
+          onHandover={handleHandover}
+          onCancel={handleCancel}
+        />
+      )}
+      {activeTab === "sell" && (
+        <SellTab
+          onSubmit={(item) => {
+            createListing(item.name, item.desc, item.instructions, item.price);
+            setActiveTab("market");
+            setModal({
+              isOpen: true,
+              type: "alert",
+              title: "Success!",
+              message: "Item listed successfully!",
+            });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// 2. Wrap the main page in Suspense
+export default function StorePage() {
+  return (
+    <div className="min-h-screen bg-[#FDFBF7] pb-24 text-stone-900 pt-20 px-4">
+      <Suspense
+        fallback={<div className="text-center p-8">Loading Store...</div>}
+      >
+        <StoreContent />
+      </Suspense>
     </div>
   );
 }
