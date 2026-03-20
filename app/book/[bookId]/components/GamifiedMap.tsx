@@ -148,7 +148,7 @@ export default function GamifiedMap({
         });
       }, 300);
     }
-  }, [mounted, isLoaded, nextChapterId, animateTo]);
+  }, [mounted, isLoaded, nextChapterId]);
 
   return (
     <section className="w-full overflow-hidden px-4 py-8 relative">

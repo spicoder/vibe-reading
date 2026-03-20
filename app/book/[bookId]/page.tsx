@@ -179,8 +179,7 @@ function BookPageContent() {
               <button
                 onClick={() => {
                   setStartModalChapter(null);
-                  // Clean up the URL so it doesn't trigger again on refresh
-                  router.replace(`/book/${bookId}`);
+                  router.replace(`/book/${bookId}`, { scroll: false });
                 }}
                 className="text-stone-400 font-bold uppercase text-xs tracking-widest py-3 hover:text-stone-600 transition-colors"
               >
