@@ -15,7 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
-import BottomNav from "../components/BottomNav";
+import BookNav from "../book/[bookId]/components/BookNav";
 
 // --- HELPER FUNCTIONS ---
 function parseReference(ref: string) {
@@ -432,7 +432,7 @@ function GemsList() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none flex flex-col items-center">
-        <BottomNav />
+        <BookNav />
       </div>
     </div>
   );

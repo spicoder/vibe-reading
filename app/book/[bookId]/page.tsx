@@ -14,11 +14,11 @@ import { useMultiplayer, PlayerProfile } from "@/app/lib/MultiplayerContext";
 // Import Refactored Components
 import BookHeader from "./components/BookHeader";
 import BookHero from "./components/BookHero";
-import GamifiedMap from "./components/GamifiedMap";
-import CommunityGemsModal from "./components/GemsModal";
+import Map from "./components/map/Map";
+import BookGemsModal from "./components/BookGemsModal";
 import { getBookTheme } from "./theme";
-import BottomNav from "@/app/components/BottomNav";
-import Leaderboard from "@/app/components/Leaderboard";
+import BookNav from "@/app/book/[bookId]/components/BookNav";
+import BookLeaderboard from "@/app/book/[bookId]/components/BookLeaderboard";
 import { div } from "framer-motion/client";
 
 // Helper to generate a consistent random background color per book
@@ -100,7 +100,7 @@ function BookPageContent() {
 
       {isLoaded && (
         <div className="absolute top-6 right-6 z-50">
-          <Leaderboard
+          <BookLeaderboard
             allPlayers={allPlayers as PlayerProfile[]}
             bookId={bookId}
             chapters={chapters}
@@ -110,7 +110,7 @@ function BookPageContent() {
 
       {/* Main Map Area */}
       <div className="pt-1">
-        <GamifiedMap
+        <Map
           book={book}
           bookId={bookId}
           chapters={chapters}
@@ -122,7 +122,7 @@ function BookPageContent() {
           isLoaded={isLoaded}
           mounted={mounted}
           onViewGems={setViewingGems}
-          // 4. Pass the animation props to GamifiedMap
+          // 4. Pass the animation props to Map
           animateTo={animateTo}
           animateFrom={animateFrom}
           isBookCompleted={isBookCompleted}
@@ -144,11 +144,11 @@ function BookPageContent() {
         </div>
 
         {/* Bottom Navigation Bar */}
-        <BottomNav bookId={bookId} />
+        <BookNav bookId={bookId} />
       </div>
 
       {viewingGems && (
-        <CommunityGemsModal
+        <BookGemsModal
           bookTitle={book.title}
           viewingGems={viewingGems}
           onClose={() => setViewingGems(null)}

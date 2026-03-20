@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Map, Heart, Bookmark, Library } from "lucide-react";
 
-export default function BottomNav({ bookId }: { bookId?: string }) {
+export default function BookNav({ bookId }: { bookId?: string }) {
   const pathname = usePathname();
 
   const isFavorites = pathname === "/favorites";

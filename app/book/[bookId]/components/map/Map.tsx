@@ -2,13 +2,13 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { PlayerProfile } from "@/app/lib/MultiplayerContext";
 
 // Newly Extracted Sub-Components
-import MapRoad from "./map/MapRoad";
-import MapScenery from "./map/MapScenery";
-import MapTreasure from "./map/MapTreasure";
-import MapAvatar from "./map/MapAvatar";
+import MapRoad from "./MapRoad";
+import MapScenery from "./MapScenery";
+import MapTreasure from "./MapTreasure";
+import MapAvatar from "./MapAvatar";
 import MapChapterNode from "./MapChapterNode"; // Or ./map/MapChapterNode if you moved it inside
 
-interface GamifiedMapProps {
+interface MapProps {
   book: any;
   bookId: string;
   chapters: [string, any][];
@@ -25,7 +25,7 @@ interface GamifiedMapProps {
   isBookCompleted?: boolean;
 }
 
-export default function GamifiedMap({
+export default function Map({
   book,
   bookId,
   chapters,
@@ -40,7 +40,7 @@ export default function GamifiedMap({
   animateTo,
   animateFrom,
   isBookCompleted,
-}: GamifiedMapProps) {
+}: MapProps) {
   const activeNodeRef = useRef<HTMLDivElement>(null);
 
   const MAP_WIDTH = 400;

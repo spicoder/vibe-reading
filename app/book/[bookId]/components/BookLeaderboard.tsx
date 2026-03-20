@@ -10,7 +10,7 @@ interface LeaderboardProps {
   chapters: [string, any][];
 }
 
-export default function Leaderboard({
+export default function BookLeaderboard({
   allPlayers,
   bookId,
   chapters,

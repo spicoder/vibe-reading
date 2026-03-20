@@ -10,14 +10,14 @@ import {
   StoryViewerProps,
   SpeakerTheme,
 } from "@/app/types";
-import { speakerThemes } from "../lib/speakerThemes";
+import { speakerThemes } from "../../lib/speakerThemes";
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
-import { StoryProgress } from "./story/StoryProgress";
-import { StoryHeader } from "./story/StoryHeader";
-import { StoryInteractions } from "./story/StoryInteractions";
-import { StorySlide } from "./story/StorySlide";
-import { StoryGrid } from "./story/StoryGrid";
-import { StoryCompletion } from "./story/StoryCompletion";
+import { StoryProgress } from "./StoryProgress";
+import { StoryHeader } from "./StoryHeader";
+import { StoryInteractions } from "./StoryInteractions";
+import { StorySlide } from "./StorySlide";
+import { StoryGrid } from "./StoryGrid";
+import { StoryCompletion } from "./StoryCompletion";
 
 const getSpeakerTheme = (speakerName: string): SpeakerTheme => {
   return speakerThemes[speakerName] || speakerThemes.default;

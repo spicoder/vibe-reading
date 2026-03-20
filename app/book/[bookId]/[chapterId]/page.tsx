@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { bibleBooks } from "@/app/lib/data";
-import StoryViewer from "@/app/components/StoryViewer";
+import StoryViewer from "@/app/components/story/StoryViewer";
 
 export async function generateStaticParams() {
   const params: { bookId: string; chapterId: string }[] = [];

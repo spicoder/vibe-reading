@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { PlayerProfile } from "@/app/lib/MultiplayerContext";
-import NodeThumbnail from "./NodeThumbnail";
-import NodeCandy from "./map/node/NodeCandy";
-import NodePlayers from "./map/node/NodePlayers";
-import NodeStars from "./map/node/NodeStars";
-import NodeGemsProps from "./map/node/NodeGems";
+import NodeThumbnail from "./node/NodeThumbnail";
+import NodeCandy from "./node/NodeCandy";
+import NodePlayers from "./node/NodePlayers";
+import NodeStars from "./node/NodeStars";
+import NodeGemsProps from "./node/NodeGems";
 
 interface MapChapterNodeProps {
   pos: { id: string; chapter: any; x: number; y: number; i: number };

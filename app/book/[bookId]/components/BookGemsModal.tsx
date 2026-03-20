@@ -10,7 +10,7 @@ interface CommunityGemsModalProps {
   onClose: () => void;
 }
 
-export default function CommunityGemsModal({
+export default function BookGemsModal({
   bookTitle,
   viewingGems,
   onClose,
