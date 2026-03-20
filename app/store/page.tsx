@@ -123,7 +123,7 @@ export default function StorePage() {
     <div className="min-h-screen bg-[#FDFBF7] pb-24 text-stone-900 pt-20 px-4">
       {/* --- CUSTOM MODAL UI --- */}
       {modal.isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold font-serif mb-2">{modal.title}</h3>
             <p className="text-stone-600 mb-6 leading-relaxed">

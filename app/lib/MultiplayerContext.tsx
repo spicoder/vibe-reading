@@ -14,6 +14,7 @@ import {
   query,
   where,
   serverTimestamp,
+  or,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -123,7 +124,7 @@ export const MultiplayerProvider = ({
       );
       listings.sort(
         (a, b) =>
-          (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0),
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0),
       );
       setActiveListings(listings);
     });
@@ -132,6 +133,15 @@ export const MultiplayerProvider = ({
 
   useEffect(() => {
     if (!currentUser || currentUser.avatar === "⏳") return;
+
+    const q = query(
+      collection(db, "orders"),
+      or(
+        where("buyerId", "==", currentUser.id),
+        where("sellerId", "==", currentUser.id),
+      ),
+    );
+
     const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
       const orders = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }) as Order)
@@ -142,12 +152,12 @@ export const MultiplayerProvider = ({
         );
       orders.sort(
         (a, b) =>
-          (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0),
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0),
       );
       setMyOrders(orders);
     });
     return () => unsubscribe();
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.avatar]);
 
   // NEW: Listen to Notifications
   useEffect(() => {
@@ -163,12 +173,12 @@ export const MultiplayerProvider = ({
       // Sort in memory to avoid needing a Firestore composite index
       notifs.sort(
         (a, b) =>
-          (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0),
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0),
       );
       setNotifications(notifs);
     });
     return () => unsubscribe();
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.avatar]);
 
   const registerUser = async (
     username: string,
