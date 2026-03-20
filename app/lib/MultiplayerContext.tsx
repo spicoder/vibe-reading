@@ -5,11 +5,16 @@ import {
   doc,
   getDoc,
   setDoc,
+  addDoc,
   onSnapshot,
   collection,
   updateDoc,
   arrayUnion,
-  increment, // <-- NEW: Added increment for safe counting
+  increment,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -24,6 +29,30 @@ export type PlayerProfile = {
   rewardedChapters: string[]; // <-- NEW: Tracks which chapters they've been paid for
 };
 
+export type MarketListing = {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  itemName: string;
+  description: string;
+  redemptionInstructions: string;
+  price: number;
+  status: "active" | "pending_handover" | "redeemed" | "cancelled";
+  createdAt: any;
+};
+
+export type Order = {
+  id: string;
+  listingId: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  itemName: string;
+  price: number;
+  status: "pending_handover" | "completed" | "cancelled_refunded";
+  createdAt: any;
+};
+
 const MultiplayerContext = createContext<any>(null);
 
 export const MultiplayerProvider = ({
@@ -34,6 +63,8 @@ export const MultiplayerProvider = ({
   const [currentUser, setCurrentUser] = useState<PlayerProfile | null>(null);
   const [allPlayers, setAllPlayers] = useState<PlayerProfile[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeListings, setActiveListings] = useState<MarketListing[]>([]);
+  const [myOrders, setMyOrders] = useState<Order[]>([]);
 
   // Auto-login from cache
   useEffect(() => {
@@ -73,6 +104,123 @@ export const MultiplayerProvider = ({
     });
     return () => unsubscribe();
   }, []);
+
+  // Listen for Market Listings (Active only)
+  useEffect(() => {
+    const q = query(
+      collection(db, "market_listings"),
+      where("status", "in", ["active", "pending_handover"]),
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const listings = snapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() }) as MarketListing,
+      );
+      // Sort in memory (newest first) since we are querying with 'in'
+      listings.sort(
+        (a, b) =>
+          (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0),
+      );
+      setActiveListings(listings);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Listen for My Orders (Pending Handovers)
+  useEffect(() => {
+    if (!currentUser || currentUser.avatar === "⏳") return;
+
+    // Listen to orders where I am the buyer OR the seller
+    const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
+      const orders = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }) as Order)
+        .filter(
+          (order) =>
+            order.buyerId === currentUser.id ||
+            order.sellerId === currentUser.id,
+        );
+
+      orders.sort(
+        (a, b) =>
+          (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0),
+      );
+      setMyOrders(orders);
+    });
+    return () => unsubscribe();
+  }, [currentUser?.id]);
+
+  const createListing = async (
+    itemName: string,
+    description: string,
+    redemptionInstructions: string,
+    price: number,
+  ) => {
+    if (!currentUser) return;
+    await addDoc(collection(db, "market_listings"), {
+      sellerId: currentUser.id,
+      sellerName: currentUser.name,
+      itemName,
+      description,
+      redemptionInstructions,
+      price,
+      status: "active",
+      createdAt: serverTimestamp(),
+    });
+  };
+
+  const buyItem = async (listing: MarketListing) => {
+    if (!currentUser || currentUser.stars < listing.price)
+      throw new Error("Not enough stars!");
+    if (listing.sellerId === currentUser.id)
+      throw new Error("You cannot buy your own item.");
+
+    // 1. Deduct stars immediately (Burn mechanic)
+    await updateDoc(doc(db, "users", currentUser.id), {
+      stars: increment(-listing.price),
+    });
+
+    // 2. Mark listing as pending
+    await updateDoc(doc(db, "market_listings", listing.id), {
+      status: "pending_handover",
+    });
+
+    // 3. Create the Order ticket
+    await addDoc(collection(db, "orders"), {
+      listingId: listing.id,
+      buyerId: currentUser.id,
+      buyerName: currentUser.name,
+      sellerId: listing.sellerId,
+      itemName: listing.itemName,
+      price: listing.price,
+      status: "pending_handover",
+      createdAt: serverTimestamp(),
+    });
+  };
+
+  const completeHandover = async (order: Order) => {
+    if (!currentUser) return;
+    // Mark order complete
+    await updateDoc(doc(db, "orders", order.id), { status: "completed" });
+    // Mark listing redeemed
+    await updateDoc(doc(db, "market_listings", order.listingId), {
+      status: "redeemed",
+    });
+  };
+
+  const cancelAndRefundOrder = async (order: Order) => {
+    if (!currentUser) return;
+    // Refund the buyer
+    await updateDoc(doc(db, "users", order.buyerId), {
+      stars: increment(order.price),
+    });
+    // Cancel the order
+    await updateDoc(doc(db, "orders", order.id), {
+      status: "cancelled_refunded",
+    });
+    // Make listing active again
+    await updateDoc(doc(db, "market_listings", order.listingId), {
+      status: "active",
+    });
+  };
 
   // 2. Register Account
   const registerUser = async (
@@ -215,16 +363,22 @@ export const MultiplayerProvider = ({
         currentUser,
         allPlayers,
         isLoaded,
+        activeListings, // NEW
+        myOrders, // NEW
         registerUser,
         loginUser,
         logoutUser,
         markAsCompleted,
-        awardChapterStars, // <-- NEW: Exported
+        awardChapterStars,
         toggleFavorite,
         isFavorite,
         saveGem,
         deleteGem,
         getGem,
+        createListing, // NEW
+        buyItem, // NEW
+        completeHandover, // NEW
+        cancelAndRefundOrder, // NEW
       }}
     >
       {children}

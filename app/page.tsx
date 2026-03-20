@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { bibleBooks } from "@/app/lib/data";
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
-import { LogOut, BookOpen } from "lucide-react";
+import { BookOpen, Store, LogOut } from "lucide-react"; // <-- Added Store
 
 const AVATARS = [
   "🦊",
@@ -153,22 +153,33 @@ export default function Home() {
   // === LIBRARY VIEW ===
   return (
     <main className="min-h-screen bg-[#FDFBF7] p-6 font-sans max-w-4xl mx-auto">
-      <header className="flex justify-between items-center mb-12 mt-6">
-        <div>
-          <h1 className="text-4xl font-black font-serif text-stone-900">
-            Library
-          </h1>
-          <p className="text-stone-500 font-medium text-sm">
-            Where would you like to explore, {currentUser.name}?
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-3xl bg-stone-100 w-12 h-12 flex items-center justify-center rounded-full shadow-sm">
+      <header className="px-2 py-5 border-b border-stone-100 bg-white/80 backdrop-blur-md z-10 flex justify-between items-center relative">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-xl shadow-inner border border-amber-200">
             {currentUser.avatar}
           </div>
+          <div>
+            <h2 className="text-sm font-bold text-stone-800 leading-tight">
+              {currentUser.name}
+            </h2>
+            <p className="text-xs text-stone-500 font-medium">
+              {currentUser.completedChapters?.length || 0} chapters read
+            </p>
+          </div>
+        </div>
+
+        {/* NEW: Store Button & Logout Wrapper */}
+        <div className="flex items-center gap-4">
+          <Link
+            href="/store"
+            className="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1.5 rounded-full font-bold text-sm transition shadow-sm border border-amber-200"
+          >
+            <Store size={16} />
+            Store
+          </Link>
           <button
             onClick={logoutUser}
-            className="text-stone-400 hover:text-stone-900 transition-colors p-2"
+            className="text-stone-400 hover:text-stone-900 transition-colors py-2 items-end"
           >
             <LogOut size={24} />
           </button>

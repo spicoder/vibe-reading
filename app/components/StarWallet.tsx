@@ -23,7 +23,7 @@ export function StarWallet() {
 
   return (
     <div
-      className={`fixed top-8 right-4 z-100 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-amber-500/30 px-4 py-1 rounded-full shadow-lg transition-transform duration-300 ease-out ${
+      className={`z-100 flex items-center gap-2 bg-white backdrop-blur-md border border-amber-500/30 px-4 py-1 rounded-full shadow-lg transition-transform duration-300 ease-out ${
         animate ? "scale-125" : "scale-100"
       }`}
     >
