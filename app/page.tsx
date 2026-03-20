@@ -158,7 +158,7 @@ export default function Home() {
           <h1 className="text-4xl font-black font-serif text-stone-900">
             Library
           </h1>
-          <p className="text-stone-500 font-medium">
+          <p className="text-stone-500 font-medium text-sm">
             Where would you like to explore, {currentUser.name}?
           </p>
         </div>

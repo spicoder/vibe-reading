@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ChevronLeft, Heart, Bookmark } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { StarWallet } from "@/app/components/StarWallet";
 
 export default function BookHeader({ title }: { title: string }) {
   return (
@@ -15,6 +16,7 @@ export default function BookHeader({ title }: { title: string }) {
           {title}
         </h1>
       </div>
+      <StarWallet />
     </header>
   );
 }

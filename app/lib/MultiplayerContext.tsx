@@ -9,6 +9,7 @@ import {
   collection,
   updateDoc,
   arrayUnion,
+  increment, // <-- NEW: Added increment for safe counting
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -17,8 +18,10 @@ export type PlayerProfile = {
   name: string;
   avatar: string;
   completedChapters: string[];
-  favorites: string[]; // <-- NEW: Added to profile
-  gems: Record<string, string>; // <-- NEW: Added to profile
+  favorites: string[];
+  gems: Record<string, string>;
+  stars: number; // <-- NEW: The currency balance
+  rewardedChapters: string[]; // <-- NEW: Tracks which chapters they've been paid for
 };
 
 const MultiplayerContext = createContext<any>(null);
@@ -36,7 +39,6 @@ export const MultiplayerProvider = ({
   useEffect(() => {
     const cachedUser = localStorage.getItem("viber_reader");
     if (cachedUser) {
-      // Temporarily set a shell user so the UI doesn't flash the login screen
       setCurrentUser({
         id: cachedUser,
         name: "Loading...",
@@ -44,6 +46,8 @@ export const MultiplayerProvider = ({
         completedChapters: [],
         favorites: [],
         gems: {},
+        stars: 0,
+        rewardedChapters: [],
       });
     }
   }, []);
@@ -60,7 +64,6 @@ export const MultiplayerProvider = ({
         if (!prev) return null;
         const updatedMe = players.find((p) => p.id === prev.id);
 
-        // If we found the real user data after auto-login, update it
         if (updatedMe && prev.avatar === "⏳") {
           return updatedMe;
         }
@@ -94,10 +97,12 @@ export const MultiplayerProvider = ({
       completedChapters: [],
       favorites: [],
       gems: {},
+      stars: 0, // <-- Initialize to 0
+      rewardedChapters: [], // <-- Initialize empty
     };
 
     await setDoc(userRef, newUser);
-    localStorage.setItem("viber_reader", normalizedId); // Cache login
+    localStorage.setItem("viber_reader", normalizedId);
     setCurrentUser(newUser);
   };
 
@@ -114,13 +119,13 @@ export const MultiplayerProvider = ({
       );
     }
 
-    localStorage.setItem("viber_reader", normalizedId); // Cache login
+    localStorage.setItem("viber_reader", normalizedId);
     setCurrentUser({ id: userSnap.id, ...userSnap.data() } as PlayerProfile);
   };
 
   // 4. Log Out
   const logoutUser = () => {
-    localStorage.removeItem("viber_reader"); // Clear cache
+    localStorage.removeItem("viber_reader");
     setCurrentUser(null);
   };
 
@@ -140,59 +145,69 @@ export const MultiplayerProvider = ({
     });
   };
 
-  // === NEW: FAVORITES LOGIC ===
-  const toggleFavorite = async (slideId: string) => {
+  // === NEW: AWARD STARS LOGIC ===
+  const awardChapterStars = async (
+    uniqueChapterId: string,
+    starsEarned: number,
+  ) => {
     if (!currentUser) return;
 
-    // Safety fallback in case favorites is undefined on older accounts
+    // Safety check for older accounts
+    const rewarded = currentUser.rewardedChapters || [];
+    if (rewarded.includes(uniqueChapterId)) return; // Prevents farming!
+
+    // Optimistic UI update
+    setCurrentUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            stars: (prev.stars || 0) + starsEarned,
+            rewardedChapters: [...rewarded, uniqueChapterId],
+          }
+        : null,
+    );
+
+    // Database update
+    await updateDoc(doc(db, "users", currentUser.id), {
+      stars: increment(starsEarned),
+      rewardedChapters: arrayUnion(uniqueChapterId),
+    });
+  };
+
+  // === FAVORITES LOGIC ===
+  const toggleFavorite = async (slideId: string) => {
+    if (!currentUser) return;
     const currentFavs = currentUser.favorites || [];
     const isFav = currentFavs.includes(slideId);
-
     const newFavs = isFav
       ? currentFavs.filter((id) => id !== slideId)
       : [...currentFavs, slideId];
 
     setCurrentUser((prev) => (prev ? { ...prev, favorites: newFavs } : null));
-
-    await updateDoc(doc(db, "users", currentUser.id), {
-      favorites: newFavs,
-    });
+    await updateDoc(doc(db, "users", currentUser.id), { favorites: newFavs });
   };
 
-  const isFavorite = (slideId: string) => {
-    return currentUser?.favorites?.includes(slideId) || false;
-  };
+  const isFavorite = (slideId: string) =>
+    currentUser?.favorites?.includes(slideId) || false;
 
-  // === NEW: SPIRITUAL GEMS (NOTES) LOGIC ===
+  // === SPIRITUAL GEMS LOGIC ===
   const saveGem = async (reference: string, content: string) => {
     if (!currentUser) return;
-
     const currentGems = currentUser.gems || {};
     const newGems = { ...currentGems, [reference]: content };
-
     setCurrentUser((prev) => (prev ? { ...prev, gems: newGems } : null));
-
-    await updateDoc(doc(db, "users", currentUser.id), {
-      gems: newGems,
-    });
+    await updateDoc(doc(db, "users", currentUser.id), { gems: newGems });
   };
 
   const deleteGem = async (reference: string) => {
     if (!currentUser) return;
-
     const newGems = { ...(currentUser.gems || {}) };
     delete newGems[reference];
-
     setCurrentUser((prev) => (prev ? { ...prev, gems: newGems } : null));
-
-    await updateDoc(doc(db, "users", currentUser.id), {
-      gems: newGems,
-    });
+    await updateDoc(doc(db, "users", currentUser.id), { gems: newGems });
   };
 
-  const getGem = (reference: string) => {
-    return currentUser?.gems?.[reference] || "";
-  };
+  const getGem = (reference: string) => currentUser?.gems?.[reference] || "";
 
   return (
     <MultiplayerContext.Provider
@@ -204,11 +219,12 @@ export const MultiplayerProvider = ({
         loginUser,
         logoutUser,
         markAsCompleted,
-        toggleFavorite, // Exported
-        isFavorite, // Exported
-        saveGem, // Exported
-        deleteGem, // Exported
-        getGem, // Exported
+        awardChapterStars, // <-- NEW: Exported
+        toggleFavorite,
+        isFavorite,
+        saveGem,
+        deleteGem,
+        getGem,
       }}
     >
       {children}

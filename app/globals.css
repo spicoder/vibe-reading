@@ -32,7 +32,41 @@ body {
   }
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  /* --- NEW FLYING STARS ANIMATION --- */
+  .fly-star {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    /* Duration is 1.2s, starts hidden, ends hidden */
+    animation: fly-up-right 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  }
+
+  @keyframes fly-up-right {
+    0% {
+      transform: translate(-50%, -50%) scale(0) rotate(0deg);
+      opacity: 0;
+    }
+    15% {
+      /* Pop into the center */
+      transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+      opacity: 1;
+    }
+    30% {
+      /* Hang in the center for a brief moment */
+      transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+      opacity: 1;
+    }
+    100% {
+      /* Fly to the top right (approx 50vw and -50vh away) */
+      transform: translate(calc(50vw - 3rem), calc(-50vh + 3rem)) scale(0.2)
+        rotate(360deg);
+      opacity: 0;
+    }
   }
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
+import { useEffect, useState } from "react"; // <-- NEW: Import useEffect
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 
 interface StoryCompletionProps {
@@ -19,30 +20,61 @@ export function StoryCompletion({
   bookTitle,
   nextChapterId,
 }: StoryCompletionProps) {
-  const { currentUser } = useMultiplayer();
+  // NEW: Destructure awardChapterStars
+  const { currentUser, awardChapterStars } = useMultiplayer();
+  const [showFlyingStars, setShowFlyingStars] = useState(false);
 
-  if (!isStoryComplete || showGrid) return null;
-
-  // Favorites use IDs like: `chapter-1-verse-12`
+  // Calculate stars based on engagement (moved outside return)
   const favPrefix = `chapter-${currentChapter}-`;
   const hasFavorites =
     currentUser?.favorites?.some((id: string) => id.startsWith(favPrefix)) ||
     false;
 
-  // Gems use references like: `Isaiah 1:1-2`
   const gemPrefix = `${bookTitle} ${currentChapter}:`;
   const hasGems =
     Object.keys(currentUser?.gems || {}).some((key: string) =>
       key.startsWith(gemPrefix),
     ) || false;
 
-  // Calculate stars based on engagement
-  let stars = 1;
-  if (hasFavorites) stars++;
-  if (hasGems) stars++;
+  let starsEarned = 1;
+  if (hasFavorites) starsEarned++;
+  if (hasGems) starsEarned++;
+
+  // NEW: Auto-award stars when the story completes
+  useEffect(() => {
+    if (isStoryComplete && !showGrid && currentUser) {
+      const uniqueChapterId = `${bookId}-${currentChapter}`;
+
+      // Check if they haven't been rewarded yet
+      const rewarded = currentUser.rewardedChapters || [];
+      if (!rewarded.includes(uniqueChapterId)) {
+        setShowFlyingStars(true); // Trigger the CSS animation
+
+        // Wait 1 second (while stars are flying) before updating the database/wallet balance
+        setTimeout(() => {
+          awardChapterStars(uniqueChapterId, starsEarned);
+        }, 1000);
+      }
+    }
+  }, [isStoryComplete, showGrid, currentUser?.id]);
+
+  if (!isStoryComplete || showGrid) return null;
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-2xl z-50 animate-in fade-in duration-500">
+      {/* NEW: Render the flying stars based on how many they earned */}
+      {showFlyingStars && (
+        <>
+          {Array.from({ length: starsEarned }).map((_, i) => (
+            <Star
+              key={`fly-${i}`}
+              className="fly-star fill-amber-400 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]"
+              style={{ animationDelay: `${i * 500}ms` }} // Stagger them slightly
+              size={56}
+            />
+          ))}
+        </>
+      )}
       <div className="text-center p-8">
         <h2 className="text-4xl font-serif font-bold mb-8">
           {!nextChapterId ? "Book Complete! 🏆" : "Chapter Complete! 🎉"}
@@ -54,14 +86,14 @@ export function StoryCompletion({
             <div
               key={star}
               className={`transform transition-all duration-700 ${
-                star <= stars ? "scale-110" : "scale-100 opacity-50"
+                star <= starsEarned ? "scale-110" : "scale-100 opacity-50"
               }`}
               style={{ transitionDelay: `${star * 150}ms` }}
             >
               <Star
                 size={56}
                 className={`${
-                  star <= stars
+                  star <= starsEarned
                     ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
                     : "fill-stone-800 text-stone-700"
                 }`}
@@ -78,20 +110,19 @@ export function StoryCompletion({
             </p>
           ) : (
             <>
-              {stars === 3 && (
+              {starsEarned === 3 && (
                 <p className="text-amber-400 font-bold text-lg animate-in slide-in-from-bottom-2 fade-in duration-500 delay-500">
-                  Outstanding! You're a true scholar! 🌟
+                  Outstanding! You earned 3 Stars! 🌟
                 </p>
               )}
-              {stars === 2 && (
+              {starsEarned === 2 && (
                 <p className="text-amber-200 text-md animate-in slide-in-from-bottom-2 fade-in duration-500 delay-300">
-                  Great job! Add some spiritual gems (notes) to earn 3 stars! ✨
+                  You earned 2 Stars! Add gems (notes) to earn 3 next time! ✨
                 </p>
               )}
-              {stars === 1 && (
+              {starsEarned === 1 && (
                 <p className="text-stone-400 text-md animate-in slide-in-from-bottom-2 fade-in duration-500 delay-150">
-                  Good start! Save some favorites or add gems to earn more
-                  stars! ⭐
+                  You earned 1 Star! Save favorites or add gems to earn more! ⭐
                 </p>
               )}
             </>
