@@ -48,6 +48,7 @@ function BookPageContent() {
   const router = useRouter();
   const animateTo = searchParams.get("animateTo");
   const animateFrom = searchParams.get("animateFrom");
+  const showModal = searchParams.get("showModal");
 
   const [mounted, setMounted] = useState(false);
   const [viewingGems, setViewingGems] = useState<{
@@ -64,15 +65,14 @@ function BookPageContent() {
 
   // 3. Trigger Modal After Map Animation (2200ms delay)
   useEffect(() => {
-    if (animateTo && animateTo !== "treasure") {
+    // <-- Add the check for showModal !== "false"
+    if (animateTo && animateTo !== "treasure" && showModal !== "false") { 
       const timer = setTimeout(() => {
         setStartModalChapter(animateTo);
       }, 2200);
       return () => clearTimeout(timer);
     }
-  }, [animateTo]);
-
-  if (!book) notFound();
+  }, [animateTo, showModal]);
 
   const chapters = Object.entries(book.chapters);
   const { currentUser, allPlayers, isLoaded } = useMultiplayer();

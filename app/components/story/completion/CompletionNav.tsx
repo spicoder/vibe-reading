@@ -28,8 +28,13 @@ export default function CompletionNav({
           Claim Treasure
         </Link>
       )}
+      {/* Updated Return to Map Link */}
       <Link
-        href={`/book/${bookId}`}
+        href={
+          nextChapterId
+            ? `/book/${bookId}?animateTo=${nextChapterId}&animateFrom=${currentChapter}&showModal=false`
+            : `/book/${bookId}?animateTo=treasure&animateFrom=${currentChapter}&showModal=false`
+        }
         className="bg-white/10 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-white/20 transition"
       >
         Return to Map
