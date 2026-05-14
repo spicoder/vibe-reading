@@ -1,7 +1,7 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ChapterData,
@@ -102,6 +102,9 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
   return items;
 };
 
+// Placeholder path — replace with the actual audio file when ready
+const CHAPTER_COMPLETE_SOUND = "/assets/audio/chapter-complete.mp3";
+
 function StoryViewerContent({
   bookId,
   bookTitle,
@@ -136,7 +139,14 @@ function StoryViewerContent({
 
   useEffect(() => {
     if (isStoryComplete) {
+      // Play chapter completion sound
+      const audio = new Audio(CHAPTER_COMPLETE_SOUND);
+      audio.volume = 0.7;
+      audio.play().catch(() => {
+        // Browser may block autoplay if there was no prior user interaction
+      });
       markAsCompleted(`${bookId}-${currentChapter}`);
+
       confetti({
         particleCount: 150,
         spread: 80,
@@ -173,23 +183,43 @@ function StoryViewerContent({
     setIsStoryComplete(false);
   };
 
-  useEffect(() => {
-    // Note: Replaced isLastSlide with isStoryComplete so the timer runs to 100 on the last slide
-    if (isPaused || isStoryComplete || showGrid) return;
-    const INTERVAL_MS = 50;
-    const INCREMENT = (INTERVAL_MS / 15000) * 100;
+  // Navigate to the first slide of the next segment (outline)
+  const handleNextSegment = useCallback(() => {
+    const nextSegIdx = slides.findIndex(
+      (s, i) => i > currentIndex && s.segmentIndex > currentSlide.segmentIndex,
+    );
+    if (nextSegIdx !== -1) {
+      setDirection(1);
+      setCurrentIndex(nextSegIdx);
+      setProgress(0);
+    } else {
+      // Already on last segment — trigger completion
+      setIsStoryComplete(true);
+    }
+  }, [currentIndex, currentSlide.segmentIndex, slides]);
 
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          handleNext();
-          return 0;
-        }
-        return prev + INCREMENT;
-      });
-    }, INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [isPaused, handleNext, isStoryComplete, showGrid]);
+  // Navigate to the first slide of the previous segment (outline)
+  const handlePrevSegment = useCallback(() => {
+    const targetSegIndex = currentSlide.segmentIndex - 1;
+    if (targetSegIndex >= 0) {
+      const prevSegIdx = slides.findIndex(
+        (s) => s.segmentIndex === targetSegIndex,
+      );
+      if (prevSegIdx !== -1) {
+        setDirection(-1);
+        setCurrentIndex(prevSegIdx);
+        setProgress(0);
+        setIsStoryComplete(false);
+      }
+    }
+  }, [currentSlide.segmentIndex, slides]);
+
+  // Swipe gesture tracking
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(
+    null,
+  );
+  const swipeHandledRef = useRef(false);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,12 +277,48 @@ function StoryViewerContent({
         onMouseDown={() => setIsPaused(true)}
         onMouseUp={() => setIsPaused(false)}
         onMouseLeave={() => setIsPaused(false)}
-        onTouchStart={() => setIsPaused(true)}
-        onTouchEnd={() => setIsPaused(false)}
+        onTouchStart={(e) => {
+          setIsPaused(true);
+          const touch = e.touches[0];
+          touchStartRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+            time: Date.now(),
+          };
+          swipeHandledRef.current = false;
+        }}
+        onTouchEnd={(e) => {
+          setIsPaused(false);
+          if (swipeHandledRef.current) {
+            // Swipe was already handled — prevent tap from firing
+            e.preventDefault();
+          }
+          touchStartRef.current = null;
+        }}
+        onTouchMove={(e) => {
+          if (!touchStartRef.current || swipeHandledRef.current) return;
+          const touch = e.touches[0];
+          const dx = touch.clientX - touchStartRef.current.x;
+          const dy = touch.clientY - touchStartRef.current.y;
+          const SWIPE_THRESHOLD = 50;
+          // Only count horizontal swipes (ignore vertical scrolls)
+          if (
+            Math.abs(dx) > SWIPE_THRESHOLD &&
+            Math.abs(dx) > Math.abs(dy) * 1.5
+          ) {
+            swipeHandledRef.current = true;
+            if (dx < 0) {
+              handleNextSegment();
+            } else {
+              handlePrevSegment();
+            }
+          }
+        }}
       >
         <div
           className="w-[30%] h-full"
           onClick={(e) => {
+            if (swipeHandledRef.current) return;
             e.stopPropagation();
             handlePrev();
           }}
@@ -260,6 +326,7 @@ function StoryViewerContent({
         <div
           className="w-[70%] h-full"
           onClick={(e) => {
+            if (swipeHandledRef.current) return;
             e.stopPropagation();
             handleNext();
           }}

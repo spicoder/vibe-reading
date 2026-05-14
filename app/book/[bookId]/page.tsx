@@ -4,7 +4,6 @@ import {
   notFound,
   useParams,
   useSearchParams,
-  useRouter,
 } from "next/navigation";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
@@ -45,7 +44,6 @@ function BookPageContent() {
 
   // 1. Hook into URL parameters for animation triggers
   const searchParams = useSearchParams();
-  const router = useRouter();
   const animateTo = searchParams.get("animateTo");
   const animateFrom = searchParams.get("animateFrom");
   const showModal = searchParams.get("showModal");
@@ -179,7 +177,6 @@ function BookPageContent() {
               <button
                 onClick={() => {
                   setStartModalChapter(null);
-                  router.replace(`/book/${bookId}`, { scroll: false });
                 }}
                 className="text-stone-400 font-bold uppercase text-xs tracking-widest py-3 hover:text-stone-600 transition-colors"
               >
