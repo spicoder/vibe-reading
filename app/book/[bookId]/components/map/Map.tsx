@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { PlayerProfile } from "@/app/lib/MultiplayerContext";
 
 // Newly Extracted Sub-Components
@@ -81,49 +81,83 @@ export default function Map({
     null,
   );
 
+  // Use refs so the animation timer isn't cancelled by unrelated dependency changes
+  const animTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastAnimKeyRef = useRef<string | null>(null);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+    };
+  }, []);
+
+  // Helper to find a node position by id
+  const findNode = useCallback(
+    (id: string) => nodePositions.find((n) => n.id === id),
+    [nodePositions],
+  );
+
+  // Animation effect: only triggers once per unique animateFrom+animateTo pair
   useEffect(() => {
     if (!mounted || !isLoaded) return;
+    if (!animateFrom || !animateTo) return;
 
-    if (animateFrom && animateTo) {
-      const fromNode = nodePositions.find((n) => n.id === animateFrom);
+    const animKey = `${animateFrom}->${animateTo}`;
+    if (lastAnimKeyRef.current === animKey) return;
+    lastAnimKeyRef.current = animKey;
 
-      if (animateTo === "treasure") {
-        if (fromNode) {
-          setAvatarPos({ x: fromNode.x, y: fromNode.y });
-          const timer = setTimeout(() => {
-            setAvatarPos({ x: treasureX, y: treasureY });
-          }, 800);
-          return () => clearTimeout(timer);
-        } else {
+    // Clear any previous animation timer
+    if (animTimerRef.current) clearTimeout(animTimerRef.current);
+
+    const fromNode = findNode(animateFrom);
+
+    if (animateTo === "treasure") {
+      if (fromNode) {
+        setAvatarPos({ x: fromNode.x, y: fromNode.y });
+        animTimerRef.current = setTimeout(() => {
           setAvatarPos({ x: treasureX, y: treasureY });
-        }
+        }, 800);
       } else {
-        const toNode = nodePositions.find((n) => n.id === animateTo);
-
-        if (fromNode && toNode) {
-          // Instantly snap to the start position
-          setAvatarPos({ x: fromNode.x, y: fromNode.y });
-
-          // Wait 800ms for the map's fade-in transition to mostly finish, THEN move
-          const timer = setTimeout(() => {
-            setAvatarPos({ x: toNode.x, y: toNode.y });
-          }, 800);
-          return () => clearTimeout(timer);
-        }
+        setAvatarPos({ x: treasureX, y: treasureY });
       }
     } else {
-      // No animation, snap directly to active next chapter node
-      if (isBookCompleted) {
-        setAvatarPos({ x: treasureX, y: treasureY });
-      } else {
-        const activeNode = nodePositions.find((n) => n.id === nextChapterId);
-        if (activeNode) {
-          setAvatarPos((prev) =>
-            prev?.x === activeNode.x && prev?.y === activeNode.y
-              ? prev
-              : { x: activeNode.x, y: activeNode.y },
-          );
-        }
+      const toNode = findNode(animateTo);
+      if (fromNode && toNode) {
+        // Instantly snap to the start position
+        setAvatarPos({ x: fromNode.x, y: fromNode.y });
+
+        // Wait 800ms for the map's fade-in transition to mostly finish, THEN move
+        animTimerRef.current = setTimeout(() => {
+          setAvatarPos({ x: toNode.x, y: toNode.y });
+        }, 800);
+      }
+    }
+  }, [
+    animateFrom,
+    animateTo,
+    mounted,
+    isLoaded,
+    findNode,
+    treasureX,
+    treasureY,
+  ]);
+
+  // Default position effect: only runs when there's no animation
+  useEffect(() => {
+    if (!mounted || !isLoaded) return;
+    if (animateFrom && animateTo) return; // Animation effect handles this
+
+    if (isBookCompleted) {
+      setAvatarPos({ x: treasureX, y: treasureY });
+    } else {
+      const activeNode = findNode(nextChapterId);
+      if (activeNode) {
+        setAvatarPos((prev) =>
+          prev?.x === activeNode.x && prev?.y === activeNode.y
+            ? prev
+            : { x: activeNode.x, y: activeNode.y },
+        );
       }
     }
   }, [
@@ -132,7 +166,7 @@ export default function Map({
     nextChapterId,
     mounted,
     isLoaded,
-    nodePositions,
+    findNode,
     isBookCompleted,
     treasureX,
     treasureY,

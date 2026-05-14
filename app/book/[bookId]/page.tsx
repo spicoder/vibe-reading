@@ -6,7 +6,7 @@ import {
   useSearchParams,
   useRouter,
 } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { bibleBooks } from "@/app/lib/data";
 import { useMultiplayer, PlayerProfile } from "@/app/lib/MultiplayerContext";
@@ -74,7 +74,7 @@ function BookPageContent() {
     }
   }, [animateTo, showModal]);
 
-  const chapters = Object.entries(book.chapters);
+  const chapters = useMemo(() => Object.entries(book.chapters), [book.chapters]);
   const { currentUser, allPlayers, isLoaded } = useMultiplayer();
   const completedChapters = currentUser?.completedChapters || [];
   const theme = getBookTheme(bookId);
