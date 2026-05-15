@@ -47,7 +47,7 @@ export default function MapChapterNode({
       ref.startsWith(chapterPrefix),
     );
     const hasFavs = currentUser?.favorites?.some((fav) =>
-      fav.startsWith(`chapter-${pos.id}-`),
+      fav.startsWith(`${bookId}-chapter-${pos.id}-`),
     );
 
     if (hasGems) userStarsCount = 3;

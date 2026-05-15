@@ -8,7 +8,7 @@ import { ChapterData, Verse } from "@/app/types";
 import { useRouter } from "next/navigation";
 import BookNav from "../book/[bookId]/components/BookNav";
 
-const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
+const getSlideIndex = (chapter: ChapterData, targetId: string, bookId: string): number => {
   const items: { id: string }[] = [];
   const sortedVisuals = [...chapter.visuals].sort(
     (a, b) => a.startVerse - b.startVerse,
@@ -33,11 +33,11 @@ const getSlideIndex = (chapter: ChapterData, targetId: string): number => {
       firstVerse.verse === visual.startVerse &&
       !addedVisuals.has(visual.startVerse)
     ) {
-      items.push({ id: `chapter-${chapterNumber}-visual-${firstVerse.verse}` });
+      items.push({ id: `${bookId}-chapter-${chapterNumber}-visual-${firstVerse.verse}` });
       addedVisuals.add(visual.startVerse);
     }
 
-    const uniqueVerseId = `chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
+    const uniqueVerseId = `${bookId}-chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
     items.push({ id: uniqueVerseId });
     currentGroup = [];
   };
@@ -100,7 +100,7 @@ export default function FavoritesPage() {
     const chapterData = book.chapters[chapterNum];
     if (!chapterData) return null;
 
-    const slideIndex = getSlideIndex(chapterData, id);
+    const slideIndex = getSlideIndex(chapterData, id, bookId);
     const linkHref =
       slideIndex >= 0
         ? `/book/${bookId}/${chapterNum}?slide=${slideIndex}`

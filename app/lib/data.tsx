@@ -1,7 +1,9 @@
 import { ChapterData, BookData } from "../types";
 import { bookOfIsaiah } from "../bookData/bookOfIsaiah";
+import { bookOfJeremiah } from "../bookData/bookOfJeremiah";
 
 export const isaiahChapters: Record<string, ChapterData> = bookOfIsaiah;
+export const jeremiahChapters: Record<string, ChapterData> = bookOfJeremiah;
 
 export const bibleBooks: Record<string, BookData> = {
   isaiah: {
@@ -10,6 +12,10 @@ export const bibleBooks: Record<string, BookData> = {
     coverImage: "/pictures/placeholder.png",
     chapters: isaiahChapters,
   },
-  // Future books go here
-  // genesis: { id: "genesis", title: "Genesis", ... }
+  jeremiah: {
+    id: "jeremiah",
+    title: "Jeremiah",
+    coverImage: "/pictures/placeholder.png",
+    chapters: jeremiahChapters,
+  },
 };

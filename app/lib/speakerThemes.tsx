@@ -11,6 +11,11 @@ export const speakerThemes: Record<string, SpeakerTheme> = {
     text: "text-2xl md:text-3xl text-amber-100",
     badge: "bg-white/20 text-white border-white/10",
   },
+  Jeremias: {
+    container: "bg-amber-800/80", // Dark brown/beige vibe
+    text: "text-2xl md:text-3xl text-amber-100",
+    badge: "bg-white/20 text-white border-white/10",
+  },
   // Add new characters here in the future:
   // "Hari ng Asirya": {
   //   container: "bg-red-950",

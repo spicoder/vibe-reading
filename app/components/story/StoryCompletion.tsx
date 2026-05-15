@@ -26,7 +26,7 @@ export function StoryCompletion({
   const [showFlyingStars, setShowFlyingStars] = useState(false);
 
   // Calculate stars based on engagement
-  const favPrefix = `chapter-${currentChapter}-`;
+  const favPrefix = `${bookId}-chapter-${currentChapter}-`;
   const hasFavorites =
     currentUser?.favorites?.some((id: string) => id.startsWith(favPrefix)) ||
     false;
@@ -45,14 +45,17 @@ export function StoryCompletion({
     starsEarned = 2;
   }
 
+  // Calculate delta stars (new - previously awarded)
+  const uniqueChapterId = `${bookId}-${currentChapter}`;
+  const chapterStarsMap = currentUser?.chapterStars || {};
+  const rewarded = currentUser?.rewardedChapters || [];
+  const previousStars = chapterStarsMap[uniqueChapterId] ?? (rewarded.includes(uniqueChapterId) ? 1 : 0);
+  const deltaStars = starsEarned - previousStars;
+
   // Auto-award stars when the story completes
   useEffect(() => {
     if (isStoryComplete && !showGrid && currentUser) {
-      const uniqueChapterId = `${bookId}-${currentChapter}`;
-
-      // Check if they haven't been rewarded yet
-      const rewarded = currentUser.rewardedChapters || [];
-      if (!rewarded.includes(uniqueChapterId)) {
+      if (deltaStars > 0) {
         setShowFlyingStars(true); // Trigger the CSS animation
 
         // Wait 1 second (while stars are flying) before updating the database/wallet balance
@@ -67,9 +70,9 @@ export function StoryCompletion({
     isStoryComplete,
     showGrid,
     currentUser?.id,
-    bookId,
-    currentChapter,
+    uniqueChapterId,
     starsEarned,
+    deltaStars,
     awardChapterStars,
   ]);
 
@@ -77,8 +80,8 @@ export function StoryCompletion({
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-2xl z-50 animate-in fade-in duration-500">
-      {/* 1. Render the flying stars based on how many they earned */}
-      {showFlyingStars && <FlyingStars count={starsEarned} />}
+      {/* 1. Render the flying stars based on how many NEW stars they earned */}
+      {showFlyingStars && <FlyingStars count={deltaStars} />}
 
       <div className="text-center p-8">
         <h2 className="text-4xl font-serif font-bold mb-8">

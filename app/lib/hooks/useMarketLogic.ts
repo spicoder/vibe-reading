@@ -7,9 +7,11 @@ import {
   addDoc,
   updateDoc,
   doc,
+  getDoc,
   serverTimestamp,
   or,
   increment,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { MarketListing, Order, PlayerProfile } from "../multiplayerTypes";
@@ -78,14 +80,20 @@ export function useMarketLogic(currentUser: PlayerProfile | null) {
   };
 
   const buyItem = async (listing: MarketListing) => {
-    if (!currentUser || currentUser.stars < listing.price)
-      throw new Error("Not enough stars!");
+    if (!currentUser) throw new Error("Not enough stars!");
     if (listing.sellerId === currentUser.id)
       throw new Error("You cannot buy your own item.");
 
-    await updateDoc(doc(db, "users", currentUser.id), {
-      stars: increment(-listing.price),
+    const userRef = doc(db, "users", currentUser.id);
+    await runTransaction(db, async (transaction) => {
+      const userSnap = await transaction.get(userRef);
+      const currentStars = userSnap.data()?.stars ?? 0;
+      if (currentStars < listing.price) {
+        throw new Error("Not enough stars!");
+      }
+      transaction.update(userRef, { stars: currentStars - listing.price });
     });
+
     await updateDoc(doc(db, "market_listings", listing.id), {
       status: "pending_handover",
     });

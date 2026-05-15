@@ -36,6 +36,7 @@ export function usePlayerLogic() {
         gems: {},
         stars: 0,
         rewardedChapters: [],
+        chapterStars: {},
       });
     }
   }, []);
@@ -99,6 +100,7 @@ export function usePlayerLogic() {
       gems: {},
       stars: 0,
       rewardedChapters: [],
+      chapterStars: {},
     };
     await setDoc(userRef, newUser);
     localStorage.setItem("viber_reader", normalizedId);
@@ -143,20 +145,26 @@ export function usePlayerLogic() {
     starsEarned: number,
   ) => {
     if (!currentUser) return;
+    const chapterStarsMap = currentUser.chapterStars || {};
     const rewarded = currentUser.rewardedChapters || [];
-    if (rewarded.includes(uniqueChapterId)) return;
+    const previousStars = chapterStarsMap[uniqueChapterId] ?? (rewarded.includes(uniqueChapterId) ? 1 : 0);
+    const delta = starsEarned - previousStars;
+    if (delta <= 0) return;
+
     setCurrentUser((prev) =>
       prev
         ? {
             ...prev,
-            stars: (prev.stars || 0) + starsEarned,
-            rewardedChapters: [...rewarded, uniqueChapterId],
+            stars: (prev.stars || 0) + delta,
+            rewardedChapters: [...(prev.rewardedChapters || []), uniqueChapterId],
+            chapterStars: { ...(prev.chapterStars || {}), [uniqueChapterId]: starsEarned },
           }
         : null,
     );
     await updateDoc(doc(db, "users", currentUser.id), {
-      stars: increment(starsEarned),
+      stars: increment(delta),
       rewardedChapters: arrayUnion(uniqueChapterId),
+      [`chapterStars.${uniqueChapterId}`]: starsEarned,
     });
   };
 

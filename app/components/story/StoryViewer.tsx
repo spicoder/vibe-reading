@@ -23,7 +23,7 @@ const getSpeakerTheme = (speakerName: string): SpeakerTheme => {
   return speakerThemes[speakerName] || speakerThemes.default;
 };
 
-const getStoryItems = (chapter: ChapterData): StoryItem[] => {
+const getStoryItems = (chapter: ChapterData, bookId: string): StoryItem[] => {
   const items: StoryItem[] = [];
   const sortedVisuals = [...chapter.visuals].sort(
     (a, b) => a.startVerse - b.startVerse,
@@ -53,7 +53,7 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
       items.push({
         type: "visual",
         data: visual,
-        id: `chapter-${chapterNumber}-visual-${firstVerse.verse}`,
+        id: `${bookId}-chapter-${chapterNumber}-visual-${firstVerse.verse}`,
         segmentIndex: Math.max(0, segmentIndex),
       });
       addedVisuals.add(visual.startVerse);
@@ -66,7 +66,7 @@ const getStoryItems = (chapter: ChapterData): StoryItem[] => {
 
     const combinedText = currentGroup.map((v) => v.text).join(" ");
     const speaker = firstVerse.speaker;
-    const uniqueVerseId = `chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
+    const uniqueVerseId = `${bookId}-chapter-${chapterNumber}-verse-${firstVerse.verse}-${items.length}`;
 
     items.push({
       type: "verse",
@@ -113,7 +113,7 @@ function StoryViewerContent({
   bookUrl,
 }: StoryViewerProps) {
   const currentChapter = chapter.chapter;
-  const slides = useMemo(() => getStoryItems(chapter), [chapter]);
+  const slides = useMemo(() => getStoryItems(chapter, bookId), [chapter, bookId]);
   const totalSegments = chapter.visuals.length;
 
   const searchParams = useSearchParams();

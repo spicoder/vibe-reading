@@ -7,6 +7,7 @@ export type PlayerProfile = {
   gems: Record<string, string>;
   stars: number;
   rewardedChapters: string[];
+  chapterStars: Record<string, number>;
 };
 
 export type MarketListing = {
