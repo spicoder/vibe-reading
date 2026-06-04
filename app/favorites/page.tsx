@@ -1,11 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { Suspense, useState, useMemo, useEffect } from "react";
 import { ArrowLeft, Heart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMultiplayer } from "@/app/lib/MultiplayerContext";
 import { bibleBooks } from "@/app/lib/data";
 import { ChapterData, Verse } from "@/app/types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BookNav from "../book/[bookId]/components/BookNav";
 
 const getSlideIndex = (chapter: ChapterData, targetId: string, bookId: string): number => {
@@ -61,11 +61,33 @@ const getSlideIndex = (chapter: ChapterData, targetId: string, bookId: string): 
   return items.findIndex((item) => item.id === targetId);
 };
 
-export default function FavoritesPage() {
+function FavoritesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bookFromUrl = searchParams.get("book");
   const { currentUser, toggleFavorite, isLoaded } = useMultiplayer();
-  const favorites = currentUser?.favorites || [];
+  const [selectedBook, setSelectedBook] = useState<string>(() => {
+    return bookFromUrl || (typeof window !== "undefined" ? localStorage.getItem("activeBookId") : null) || "all";
+  });
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  // Sync selectedBook with URL param when navigating between books
+  useEffect(() => {
+    const book = bookFromUrl || (typeof window !== "undefined" ? localStorage.getItem("activeBookId") : null) || "all";
+    setSelectedBook(book);
+  }, [bookFromUrl]);
+
+  // Extract bookId from favorite ID and filter by selected book
+  const filteredFavorites = useMemo(() => {
+    const allFavorites = currentUser?.favorites || [];
+    if (selectedBook === "all") return allFavorites;
+    
+    return allFavorites.filter((id: string) => {
+      const match = id.match(/^([a-zA-Z0-9]+)-chapter-/);
+      const bookId = match ? match[1] : "isaiah";
+      return bookId === selectedBook;
+    });
+  }, [currentUser?.favorites, selectedBook]);
 
   const getVerseContent = (id: string) => {
     let bookId = "isaiah"; // Fallback for older favorites
@@ -154,9 +176,21 @@ export default function FavoritesPage() {
             Favorites
           </h1>
         </div>
+        <select
+          value={selectedBook}
+          onChange={(e) => setSelectedBook(e.target.value)}
+          className="px-4 py-2 bg-white border border-stone-200 rounded-lg text-stone-900 font-medium hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none transition-all cursor-pointer"
+        >
+          <option value="all">All Books</option>
+          {Object.values(bibleBooks).map((book) => (
+            <option key={book.id} value={book.id}>
+              {book.title}
+            </option>
+          ))}
+        </select>
       </header>
 
-      {favorites.length === 0 ? (
+      {filteredFavorites.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 opacity-50 text-center">
           <div className="w-20 h-20 bg-stone-100 rounded-full flex items-center justify-center mb-6 text-stone-300">
             <Heart size={40} />
@@ -170,7 +204,7 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="grid gap-4 max-w-2xl mx-auto pb-20">
-          {favorites.map((id: string) => {
+          {filteredFavorites.map((id: string) => {
             const content = getVerseContent(id);
             if (!content) return null;
 
@@ -243,5 +277,13 @@ export default function FavoritesPage() {
         <BookNav />
       </div>
     </main>
+  );
+}
+
+export default function FavoritesPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7]" />}>
+      <FavoritesPage />
+    </Suspense>
   );
 }

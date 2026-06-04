@@ -42,6 +42,11 @@ function BookPageContent() {
   const bookId = params.bookId as string;
   const book = bibleBooks[bookId];
 
+  // Persist the active book so favorites/gems pages can filter by it
+  useEffect(() => {
+    localStorage.setItem("activeBookId", bookId);
+  }, [bookId]);
+
   // 1. Hook into URL parameters for animation triggers
   const searchParams = useSearchParams();
   const animateTo = searchParams.get("animateTo");

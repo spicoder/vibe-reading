@@ -245,9 +245,20 @@ function GemsEditor({ initialRef }: { initialRef: string }) {
 
 function GemsList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bookFromUrl = searchParams.get("book");
   const { currentUser, deleteGem, isLoaded } = useMultiplayer();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBook, setSelectedBook] = useState<string>(() => {
+    return bookFromUrl || (typeof window !== "undefined" ? localStorage.getItem("activeBookId") : null) || "all";
+  });
   const [gemToDelete, setGemToDelete] = useState<string | null>(null);
+
+  // Sync selectedBook with URL param when navigating between books
+  useEffect(() => {
+    const book = bookFromUrl || (typeof window !== "undefined" ? localStorage.getItem("activeBookId") : null) || "all";
+    setSelectedBook(book);
+  }, [bookFromUrl]);
 
   if (!isLoaded)
     return (
@@ -257,7 +268,19 @@ function GemsList() {
   const gemsArray = Object.entries(currentUser?.gems || {}).map(
     ([ref, content]) => ({ ref, content: String(content) }),
   );
-  const filteredGems = gemsArray.filter(
+
+  // Filter gems by selected book
+  const filteredGemsArray = gemsArray.filter((g) => {
+    if (selectedBook === "all") return true;
+    
+    const parsed = parseReference(g.ref);
+    if (!parsed) return false;
+    
+    const bookKey = parsed.bookTitle.toLowerCase();
+    return bookKey === selectedBook;
+  });
+
+  const filteredGems = filteredGemsArray.filter(
     (g) =>
       g.ref.toLowerCase().includes(searchTerm.toLowerCase()) ||
       g.content.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -273,14 +296,26 @@ function GemsList() {
           >
             <ArrowLeft size={24} />
           </button>
-          <div>
+          <div className="flex-1">
             <h1 className="font-serif text-2xl font-bold text-stone-900">
               Spiritual Gems
             </h1>
             <p className="text-xs text-stone-500 font-bold uppercase tracking-widest">
-              {gemsArray.length} Notes Saved
+              {filteredGemsArray.length} Notes Saved
             </p>
           </div>
+          <select
+            value={selectedBook}
+            onChange={(e) => setSelectedBook(e.target.value)}
+            className="px-4 py-2 bg-white border border-stone-200 rounded-lg text-stone-900 font-medium hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none transition-all cursor-pointer"
+          >
+            <option value="all">All Books</option>
+            {Object.values(bibleBooks).map((book) => (
+              <option key={book.id} value={book.id}>
+                {book.title}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="relative">
           <Search
@@ -298,7 +333,7 @@ function GemsList() {
       </header>
 
       <div className="flex-1 p-6">
-        {gemsArray.length === 0 ? (
+        {filteredGemsArray.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-50 text-center">
             <div className="w-20 h-20 bg-stone-100 rounded-full flex items-center justify-center mb-6 text-stone-300">
               <MessageCircle size={40} />
