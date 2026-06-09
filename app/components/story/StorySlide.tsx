@@ -61,14 +61,14 @@ export function StorySlide({
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60"></div>
             </div>
             <motion.div className="relative z-10 p-6">
+              <h2 className="text-4xl md:text-7xl font-black font-serif text-white mt-20 mb-6 leading-tight tracking-tighter drop-shadow-2xl">
+                {visualData.title}
+              </h2>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-8 shadow-xl">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
                   {visualData.description}
                 </span>
               </div>
-              <h2 className="text-4xl md:text-7xl font-black font-serif text-white mb-6 leading-tight tracking-tighter drop-shadow-2xl">
-                {visualData.title}
-              </h2>
             </motion.div>
           </div>
         ) : verseData ? (
@@ -78,7 +78,7 @@ export function StorySlide({
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[length:16px_16px]"></div>
             <div className="relative z-10 max-w-xl mx-auto w-full px-8">
               <p
-                className={`font-serif leading-relaxed mb-6 transition-transform duration-300 ${currentTheme.text}`}
+                className={`font-serif text-center leading-relaxed mb-6 transition-transform duration-300 ${currentTheme.text}`}
               >
                 {verseData.text}
               </p>
