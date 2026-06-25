@@ -7,6 +7,7 @@ interface StorySlideProps {
   direction: number;
   currentTheme: SpeakerTheme;
   currentChapter: number;
+  bookTitle: string;
 }
 
 const variants: Variants = {
@@ -31,6 +32,7 @@ export function StorySlide({
   direction,
   currentTheme,
   currentChapter,
+  bookTitle,
 }: StorySlideProps) {
   const verseData = currentSlide.type === "verse" ? currentSlide.data : null;
   const visualData = currentSlide.type === "visual" ? currentSlide.data : null;
@@ -85,7 +87,7 @@ export function StorySlide({
             </div>
             <div className="absolute bottom-12 left-8 z-20">
               <p className="font-bold uppercase tracking-widest text-amber-500/80 text-xs">
-                Isaias {currentChapter}:{verseData.verseDisplay}
+                {bookTitle} {currentChapter}:{verseData.verseDisplay}
               </p>
             </div>
           </div>

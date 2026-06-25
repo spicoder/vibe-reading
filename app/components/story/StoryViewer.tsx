@@ -1,7 +1,14 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { useState, useCallback, useEffect, useRef, Suspense, useMemo } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  Suspense,
+  useMemo,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ChapterData,
@@ -113,7 +120,10 @@ function StoryViewerContent({
   bookUrl,
 }: StoryViewerProps) {
   const currentChapter = chapter.chapter;
-  const slides = useMemo(() => getStoryItems(chapter, bookId), [chapter, bookId]);
+  const slides = useMemo(
+    () => getStoryItems(chapter, bookId),
+    [chapter, bookId],
+  );
   const totalSegments = chapter.visuals.length;
 
   const searchParams = useSearchParams();
@@ -219,7 +229,6 @@ function StoryViewerContent({
     null,
   );
   const swipeHandledRef = useRef(false);
-
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -338,6 +347,7 @@ function StoryViewerContent({
         direction={direction}
         currentTheme={currentTheme}
         currentChapter={currentChapter}
+        bookTitle={bookTitle}
       />
 
       <StoryGrid

@@ -1479,9 +1479,15 @@ export const bookOfJeremiah = {
       },
       {
         verse: 3,
-        speaker: "Jehova",
-        text: "Binabaluktot nilang gaya ng búsog ang dila nila; Kasinungalingan, hindi katapatan, ang namamayani sa lupain. “Pasamâ sila nang pasamâ, At hindi sila nakikinig sa akin,” ang sabi ni Jehova.",
+        speaker: "Jeremias",
+        text: "Binabaluktot nilang gaya ng búsog ang dila nila; Kasinungalingan, hindi katapatan, ang namamayani sa lupain.",
       },
+      {
+        verse: 3,
+        speaker: "Jehova",
+        text: "“Pasamâ sila nang pasamâ, At hindi sila nakikinig sa akin,” ang sabi ni Jehova.",
+      },
+
       {
         verse: 4,
         speaker: "Jehova",
@@ -1559,7 +1565,7 @@ export const bookOfJeremiah = {
       },
       {
         verse: 19,
-        speaker: "Jeremias",
+        speaker: "Bayan ng Diyos",
         text: "Dahil maririnig ang pagdadalamhati mula sa Sion: “Napakasaklap ng nangyari sa atin! Napakalaking kahihiyan nito! Dahil pinaalis tayo sa lupain, at winasak nila ang mga tahanan natin.”",
       },
       {
@@ -1641,17 +1647,17 @@ export const bookOfJeremiah = {
       },
       {
         verse: 3,
-        speaker: "Jeremias",
+        speaker: "Jehova",
         text: "Dahil ang kaugalian ng mga bansa ay walang kabuluhan. Isa lang itong pinutol na puno sa gubat At gawa ng bihasang manggagawa gamit ang kasangkapan niya.",
       },
       {
         verse: 4,
-        speaker: "Jeremias",
+        speaker: "Jehova",
         text: "Nilalagyan nila ito ng palamuting pilak at ginto At ipinapako para hindi mabuwal.",
       },
       {
         verse: 5,
-        speaker: "Jeremias",
+        speaker: "Jehova",
         text: "Gaya ng panakot ng ibon sa taniman ng pipino, hindi sila makapagsalita; Kailangan silang buhatin, dahil hindi sila makalakad. Huwag kayong matakot sa kanila, dahil hindi sila makapananakit, At hindi rin sila makagagawa ng anumang mabuti.”",
       },
       {
