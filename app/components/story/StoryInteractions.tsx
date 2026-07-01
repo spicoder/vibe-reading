@@ -16,6 +16,7 @@ interface StoryInteractionsProps {
   currentChapter: number;
   isFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
+  isCompletionOverlayActive?: boolean;
 }
 
 export function StoryInteractions({
@@ -29,6 +30,7 @@ export function StoryInteractions({
   currentChapter,
   isFavorite,
   toggleFavorite,
+  isCompletionOverlayActive = false,
 }: StoryInteractionsProps) {
   const router = useRouter();
 
@@ -37,7 +39,9 @@ export function StoryInteractions({
   return (
     <div
       className={`absolute right-4 bottom-10 z-40 flex flex-col gap-6 items-center transition-opacity duration-300 ${
-        isPaused || showGrid ? "opacity-0 pointer-events-none" : "opacity-100"
+        isPaused || showGrid || isCompletionOverlayActive
+          ? "opacity-0 pointer-events-none"
+          : "opacity-100"
       }`}
     >
       <button

@@ -12,6 +12,8 @@ interface StoryCompletionProps {
   bookId: string;
   bookTitle: string;
   nextChapterId?: string | null;
+  hasMetTimeRequirement: boolean;
+  hasEngaged: boolean;
 }
 
 export function StoryCompletion({
@@ -21,9 +23,14 @@ export function StoryCompletion({
   bookId,
   bookTitle,
   nextChapterId,
+  hasMetTimeRequirement,
+  hasEngaged,
 }: StoryCompletionProps) {
   const { currentUser, awardChapterStars } = useMultiplayer();
   const [showFlyingStars, setShowFlyingStars] = useState(false);
+
+  // Check if user met engagement requirements
+  const metRequirements = hasMetTimeRequirement && hasEngaged;
 
   // Calculate stars based on engagement
   const favPrefix = `${bookId}-chapter-${currentChapter}-`;
@@ -37,19 +44,29 @@ export function StoryCompletion({
       key.startsWith(gemPrefix),
     ) || false;
 
-  // Updated star calculation to match map logic (3 stars for gems, 2 for favs)
-  let starsEarned = 1;
-  if (hasGems) {
-    starsEarned = 3;
-  } else if (hasFavorites) {
-    starsEarned = 2;
+  // Updated star calculation:
+  // - 0 stars if didn't meet time/engagement requirements
+  // - 3 stars for gems (if met requirements)
+  // - 2 for favs (if met requirements)
+  // - 1 for just completing (if met requirements)
+  let starsEarned = 0;
+  if (metRequirements) {
+    if (hasGems) {
+      starsEarned = 3;
+    } else if (hasFavorites) {
+      starsEarned = 2;
+    } else {
+      starsEarned = 1;
+    }
   }
 
   // Calculate delta stars (new - previously awarded)
   const uniqueChapterId = `${bookId}-${currentChapter}`;
   const chapterStarsMap = currentUser?.chapterStars || {};
   const rewarded = currentUser?.rewardedChapters || [];
-  const previousStars = chapterStarsMap[uniqueChapterId] ?? (rewarded.includes(uniqueChapterId) ? 1 : 0);
+  const previousStars =
+    chapterStarsMap[uniqueChapterId] ??
+    (rewarded.includes(uniqueChapterId) ? 1 : 0);
   const deltaStars = starsEarned - previousStars;
 
   // Auto-award stars when the story completes
