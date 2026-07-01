@@ -1687,7 +1687,7 @@ export const bookOfJeremiah = {
       },
       {
         verse: 11,
-        speaker: "Jehova",
+        speaker: "Jeremias",
         text: "Ito ang sasabihin ninyo sa kanila: “Ang mga diyos na hindi gumawa ng langit at ng lupa Ay maglalaho sa lupa at sa silong ng langit.”",
       },
       {
@@ -1794,12 +1794,17 @@ export const bookOfJeremiah = {
       },
       {
         verse: 2,
+        speaker: "Jeremias",
+        text: "“Pakinggan ninyo ang sinasabi ng tipang ito, O bayan!",
+      },
+      {
+        verse: 2,
         speaker: "Jehova",
-        text: "“Pakinggan ninyo ang sinasabi ng tipang ito, O bayan! “Ihayag mo ito sa mga taga-Juda at mga taga-Jerusalem,",
+        text: "Ihayag mo ito sa mga taga-Juda at mga taga-Jerusalem,",
       },
       {
         verse: 3,
-        speaker: "Jeremias",
+        speaker: "Jehova",
         text: "at sabihin mo sa kanila, ‘Ito ang sinabi ni Jehova na Diyos ng Israel: “Sumpain ang taong hindi sumusunod sa mga salita ng tipang ito,",
       },
       {
@@ -1809,13 +1814,23 @@ export const bookOfJeremiah = {
       },
       {
         verse: 5,
+        speaker: "Jehova",
+        text: "para matupad ko ang ipinanata ko sa mga ninuno ninyo, na ibibigay ko sa kanila ang lupaing inaagusan ng gatas at pulot-pukyutan, gaya ng sa araw na ito.’",
+      },
+      {
+        verse: 5,
         speaker: "Jeremias",
-        text: "para matupad ko ang ipinanata ko sa mga ninuno ninyo, na ibibigay ko sa kanila ang lupaing inaagusan ng gatas at pulot-pukyutan, gaya ng sa araw na ito.’”’” At sumagot ako: “Amen, O Jehova.”",
+        text: "At sumagot ako: “Amen, O Jehova.”",
+      },
+      {
+        verse: 6,
+        speaker: "Jeremias",
+        text: "Pagkatapos ay sinabi ni Jehova sa akin: ",
       },
       {
         verse: 6,
         speaker: "Jehova",
-        text: "Pagkatapos ay sinabi ni Jehova sa akin: “Ihayag mo ang lahat ng salitang ito sa mga lunsod ng Juda at sa mga lansangan ng Jerusalem: ‘Pakinggan ninyo ang mga salita ng tipang ito, at gawin ninyo ang mga ito.",
+        text: "Ihayag mo ang lahat ng salitang ito sa mga lunsod ng Juda at sa mga lansangan ng Jerusalem: ‘Pakinggan ninyo ang mga salita ng tipang ito, at gawin ninyo ang mga ito.",
       },
       {
         verse: 7,
@@ -1829,8 +1844,13 @@ export const bookOfJeremiah = {
       },
       {
         verse: 9,
+        speaker: "Jeremias",
+        text: "Pagkatapos ay sinabi ni Jehova sa akin:",
+      },
+      {
+        verse: 9,
         speaker: "Jehova",
-        text: "Pagkatapos ay sinabi ni Jehova sa akin: “May sabuwatan sa mga taga-Juda at mga taga-Jerusalem.",
+        text: "May sabuwatan sa mga taga-Juda at mga taga-Jerusalem.",
       },
       {
         verse: 10,
@@ -1889,18 +1909,23 @@ export const bookOfJeremiah = {
       },
       {
         verse: 21,
-        speaker: "Jehova",
+        speaker: "Jeremias",
         text: "Kaya ito ang sinabi ni Jehova laban sa mga taga-Anatot na gustong pumatay sa akin at nagsasabi: “Huwag kang manghula sa pangalan ni Jehova; kung hindi ay papatayin ka namin”;",
       },
       {
         verse: 22,
+        speaker: "Jeremias",
+        text: "kaya ito ang sinabi ni Jehova ng mga hukbo: ",
+      },
+      {
+        verse: 22,
         speaker: "Jehova",
-        text: "kaya ito ang sinabi ni Jehova ng mga hukbo: “Pananagutin ko sila. Ang mga lalaki ay mamamatay sa espada, at ang mga anak nilang lalaki at babae ay mamamatay sa taggutom.",
+        text: "Pananagutin ko sila. Ang mga lalaki ay mamamatay sa espada, at ang mga anak nilang lalaki at babae ay mamamatay sa taggutom.",
       },
       {
         verse: 23,
         speaker: "Jehova",
-        text: "Walang matitira sa kanila kahit isa, dahil magdadala ako ng kapahamakan sa mga taga-Anatot sa taon na pananagutin ko sila.”",
+        text: "Walang matitira sa kanila kahit isa, dahil magdadala ako ng kapahamakan sa mga taga-Anatot sa taon na pananagutin ko sila.",
       },
     ],
   },
@@ -1986,8 +2011,13 @@ export const bookOfJeremiah = {
       },
       {
         verse: 14,
+        speaker: "Jeremias",
+        text: "Ito ang sinabi ni Jehova laban sa lahat ng masasamang bayan sa paligid ko, na pumipinsala sa pag-aaring ipinamana ko sa bayan kong Israel: ",
+      },
+      {
+        verse: 14,
         speaker: "Jehova",
-        text: "Ito ang sinabi ni Jehova laban sa lahat ng masasamang bayan sa paligid ko, na pumipinsala sa pag-aaring ipinamana ko sa bayan kong Israel: “Bubunutin ko sila mula sa kanilang lupain, at bubunutin ko ang sambahayan ng Juda sa gitna nila.",
+        text: "“Bubunutin ko sila mula sa kanilang lupain, at bubunutin ko ang sambahayan ng Juda sa gitna nila.",
       },
       {
         verse: 15,
